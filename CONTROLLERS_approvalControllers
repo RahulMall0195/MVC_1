@@ -1,0 +1,2030 @@
+
+______________________________________________________________approvalControllers.cs_________________________________________________________
+
+using MVCConsignment.App_Code.FAMS;
+using MVCConsignment.Models;
+using MVCConsignment.UnitOfWorks;
+using MVCConsignment.ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Web.Mvc;
+
+namespace MVCConsignment.Controllers
+{
+    public class ApprovalController : BaseController
+    {
+        CALYX_LOGISEntities db = null;
+        IUnitOfWork UOW = null;
+
+        EncryptDecryptQueryString edq = new EncryptDecryptQueryString();
+        CALYXEntities1 calyx = null;
+
+        DAL_FA_EquipmentLeaseRent Rent = new DAL_FA_EquipmentLeaseRent();
+        public ApprovalController(DbContext db1, IUnitOfWork iow)
+        {
+            UOW = iow;
+            db = (CALYX_LOGISEntities)db1;
+            calyx = new CALYXEntities1();
+        }
+
+        public ActionResult EquipmentRent_Approval()
+        {
+            ViewBag.Header = "Trailer Bill Approval";
+            VM_EquipmentLeaseRent_Approval Equip = new VM_EquipmentLeaseRent_Approval();
+            Equip.VendorList = new SelectList(db.usp_FillVendorFor_Asset("C"), "VENDERID", "VENDORNAME");
+            string from_Dt = ""; string to_Dt = "";
+            if (Equip.FROM_DT != null)
+            {
+                from_Dt = Equip.FROM_DT.Value.ToString("dd/MM/yyyy");
+            }
+            if (Equip.FROM_DT != null)
+            {
+                to_Dt = Equip.TO_DT.Value.ToString("dd/MM/yyyy");
+            }
+            dynamic Result = null;
+
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+            Equip.BranchCode = Convert.ToString(LogIn.Branch_Code);
+
+            //if (Equip.VendorType == "C")
+            //{
+            Result = Rent.Fill_EquipmentRent_ProcessOn(Equip.BranchCode, "0", "", "", "N");
+            //}
+            //else
+            //{
+            //    Result = Rent.Fill_Market_Vehicle_Bill_For_Approval(Equip.BranchCode, "0", "", "", "N");
+            //}
+
+            List<VM_EquipmentRentForApproval> ApprovalList = new List<VM_EquipmentRentForApproval>();
+
+            foreach (DataRow dr in Result.Rows)
+            {
+                VM_EquipmentRentForApproval _payable = new VM_EquipmentRentForApproval();
+                _payable.AssetType_Code = Convert.ToDecimal(dr["AssetType_Code"]);
+                _payable.Branch_Code = dr["Branch_Code"].ToString();
+                _payable.ELR_CODE = dr["ELR_CODE"].ToString();
+                _payable.ELR_ID = Convert.ToDecimal(dr["ELR_ID"]);
+                _payable.FILE_ATTACH = dr["FILE_ATTACH"].ToString();
+                _payable.FinalRent = Convert.ToDecimal(dr["FinalRent"]);
+                _payable.PayableAmt = Convert.ToDecimal(dr["PayableAmt"]);
+                _payable.PayableDate = dr["PayableDate"].ToString();
+                _payable.Period = dr["Period"].ToString();
+                _payable.TDS_Amount = Convert.ToDecimal(dr["TDS_Amount"]);
+                _payable.TDS_Per = Convert.ToDecimal(dr["TDS_Per"]);
+                _payable.TotalRent = Convert.ToDecimal(dr["TotalRent"]);
+                _payable.TotalServiceTax = Convert.ToDecimal(dr["TotalServiceTax"]);
+                _payable.VendorCode = dr["VendorCode"].ToString();
+                _payable.VENDERNAME = Convert.ToString(dr["VENDERNAME"]);
+                _payable.BillDate = Convert.ToString(dr["BillDate"]);
+
+                ApprovalList.Add(_payable);
+            }
+
+            Equip.ApprovalList = ApprovalList;
+            return View(Equip);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Show")]
+        [ActionName("EquipmentRent_Approval")]
+        public ActionResult EquipmentLeaseRent_Show(VM_EquipmentLeaseRent_Approval Equip)
+        {
+            ModelState.Clear();
+            ViewBag.Header = "Trailer Bill Approval";
+
+            Equip.VendorList = new SelectList(db.usp_FillVendorFor_Asset("C"), "VENDERID", "VENDORNAME");
+            string from_Dt = ""; string to_Dt = "";
+            if (Equip.FROM_DT != null)
+            {
+                from_Dt = Equip.FROM_DT.Value.ToString("dd/MM/yyyy");
+            }
+            if (Equip.FROM_DT != null)
+            {
+                to_Dt = Equip.TO_DT.Value.ToString("dd/MM/yyyy");
+            }
+
+            dynamic Result = null;
+
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+            Equip.BranchCode = Convert.ToString(LogIn.Branch_Code);
+
+            if (Equip.VendorType == "C")
+            {
+                Result = Rent.Fill_EquipmentRent_ProcessOn(Equip.BranchCode, Equip.VendorId ?? "0", from_Dt, to_Dt, "N");
+            }
+            else
+            {
+                Result = Rent.Fill_Market_Vehicle_Bill_For_Approval(Equip.BranchCode, Equip.VendorId ?? "0", from_Dt, to_Dt, "N");
+            }
+
+            List<VM_EquipmentRentForApproval> ApprovalList = new List<VM_EquipmentRentForApproval>();
+
+            foreach (DataRow dr in Result.Rows)
+            {
+                VM_EquipmentRentForApproval _payable = new VM_EquipmentRentForApproval();
+                _payable.AssetType_Code = Convert.ToDecimal(dr["AssetType_Code"]);
+                _payable.Branch_Code = dr["Branch_Code"].ToString();
+                _payable.ELR_CODE = dr["ELR_CODE"].ToString();
+                _payable.ELR_ID = Convert.ToDecimal(dr["ELR_ID"]);
+                _payable.FILE_ATTACH = dr["FILE_ATTACH"].ToString();
+                _payable.FinalRent = Convert.ToDecimal(dr["FinalRent"]);
+                _payable.PayableAmt = Convert.ToDecimal(dr["PayableAmt"]);
+                _payable.PayableDate = dr["PayableDate"].ToString();
+                _payable.Period = dr["Period"].ToString();
+                _payable.TDS_Amount = Convert.ToDecimal(dr["TDS_Amount"]);
+                _payable.TDS_Per = Convert.ToDecimal(dr["TDS_Per"]);
+                _payable.TotalRent = Convert.ToDecimal(dr["TotalRent"]);
+                _payable.TotalServiceTax = Convert.ToDecimal(dr["TotalServiceTax"]);
+                _payable.VendorCode = dr["VendorCode"].ToString();
+                _payable.VENDERNAME = Convert.ToString(dr["VENDERNAME"]);
+                _payable.BillDate = Convert.ToString(dr["BillDate"]);
+
+                ApprovalList.Add(_payable);
+            }
+
+            Equip.ApprovalList = ApprovalList;
+
+            return View(Equip);
+        }
+
+        public ActionResult Fill_EquipmentRent_Dtls(double ELR_ID, string VendorType)
+        {
+
+            //EquipmentRent_Dtls
+            dynamic result = null;
+            if (VendorType == "C")
+            {
+                result = Rent.Fill_EquipmentRent_Dtls(ELR_ID);
+            }
+            else
+            {
+                result = Rent.Fill_Market_Vehicle_Bill_Dtls(ELR_ID);
+            }
+            List<VM_EquipmentRent_Dtls> list = new List<VM_EquipmentRent_Dtls>();
+            VM_EquipmentRent_Dtls dtl = null;
+            foreach (DataRow dr in result.Tables[1].Rows)
+            {
+                dtl = new VM_EquipmentRent_Dtls();
+                dtl.ELR_ID = Convert.ToDecimal(dr["ELR_ID"]);
+                dtl.SLNO = list.Count + 1;
+                dtl.Asset_Code = Convert.ToInt32(dr["Asset_Code"]);
+                dtl.Asset_Name = dr["Asset_Name"].ToString();
+                dtl.Registration_No = dr["Registration_No"].ToString();
+                dtl.Rental_Amt = Convert.ToDecimal(dr["Rental_Amt"]);
+
+                dtl.ServiceTax_Per = Convert.ToDecimal(dr["ServiceTax_Per"]);
+                dtl.ServiceTax_Amt = Convert.ToDecimal(dr["ServiceTax_Amt"]);
+                dtl.SwachhBharat_Per = Convert.ToDecimal(dr["SwachhBharat_Per"]);
+                dtl.SwachhBharat_Amt = Convert.ToDecimal(dr["SwachhBharat_Amt"]);
+                dtl.KrishiKalyan_Per = Convert.ToDecimal(dr["KrishiKalyan_Per"]);
+                dtl.KrishiKalyan_Amt = Convert.ToDecimal(dr["KrishiKalyan_Amt"]);
+
+                dtl.TotalServiceTax = Convert.ToDecimal(dr["TotalServiceTax"]);
+                dtl.TotalRent_Amt = Convert.ToDecimal(dr["TotalRent_Amt"]);
+                dtl.Discount_Amt = Convert.ToDecimal(dr["Discount_Amt"]);
+
+                dtl.System_Deduction_Amt = Convert.ToDecimal(dr["System_Deduction_Amt"]);
+                dtl.Actual_Sys_Deduction_Amt = Convert.ToDecimal(dr["Actual_Sys_Deduction_Amt"]);
+
+
+                dtl.H_TotalRent = Convert.ToDecimal(result.Tables[0].Rows[0]["TotalRent"]);
+                dtl.H_TotalServiceTax = Convert.ToDecimal(result.Tables[0].Rows[0]["TotalServiceTax"]);
+                dtl.H_FinalRent = Convert.ToDecimal(result.Tables[0].Rows[0]["FinalRent"]);
+                dtl.H_TDS_Per = Convert.ToDecimal(result.Tables[0].Rows[0]["TDS_Per"]);
+                dtl.H_TDS_Amount = Convert.ToDecimal(result.Tables[0].Rows[0]["TDS_Amount"]);
+                dtl.H_VendorOnAccount = Convert.ToDecimal(result.Tables[0].Rows[0]["VendorOnAccount"]);
+                dtl.H_PayableAmt = Convert.ToDecimal(result.Tables[0].Rows[0]["PayableAmt"]);
+                dtl.H_Remarks = result.Tables[0].Rows[0]["Remarks"].ToString();
+                dtl.VendorCode = result.Tables[0].Rows[0]["VendorCode"].ToString();
+                dtl.VENDERNAME = result.Tables[0].Rows[0]["VENDERNAME"].ToString();
+
+                if (VendorType == "M")
+                {
+                    dtl.Job_Code = dr["JOB_CODE"].ToString();
+                    dtl.Job_Id = dr["JOB_ID"].ToString();
+                    dtl.Job_Date = Convert.ToDateTime(dr["JOB_DATE"]).ToString("dd/MM/yyyy hh:mm tt");
+                    dtl.TripAdvanceAmt = Convert.ToDecimal(dr["TRIP_ADVANCE"]);
+                    dtl.TotalTripAdvanceAmt = Convert.ToDecimal(dr["TOTAL_TRIP_ADVANCE"]);
+                    dtl.FuelAmt = Convert.ToDecimal(dr["FUEL_AMT"]);
+                    dtl.AdvTdsAmt = Convert.ToDecimal(dr["TDS_AMT"]);
+                    dtl.HaltingCharge = Convert.ToDecimal(dr["HALT_CHARGE"] ?? "0");
+                }
+                if (VendorType == "C")
+                {
+                    dtl.IncentiveAmt = Convert.ToDecimal(dr["INCENTIVE_AMT"]);
+
+                    dtl.BillNo = result.Tables[0].Rows[0]["BillNo"].ToString();
+                    dtl.BillDate = result.Tables[0].Rows[0]["BillDate"].ToString();
+                    dtl.Bill_Month = result.Tables[0].Rows[0]["Bill_Month"].ToString();
+                }
+
+                list.Add(dtl);
+            }
+
+            TempData["EquipmentRent_Dtls"] = list;
+            return Json(list, JsonRequestBehavior.AllowGet);
+        }
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Save")]
+        [ActionName("EquipmentRent_Approval")]
+        public ActionResult EquipmentLeaseRent_Save(VM_EquipmentLeaseRent_Approval Equip)
+        {
+            ViewBag.Header = "Trailer Bill Approval";
+            //ViewBag.Header = "Rental Trailer Bill Approval";
+            try
+            {
+                SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+                Equip.BranchCode = Convert.ToString(LogIn.Branch_Code);
+
+                List<VM_EquipmentRent_Dtls> list = (List<VM_EquipmentRent_Dtls>)TempData["EquipmentRent_Dtls"];
+
+                //List<VM_EquipmentRent_Dtls> list = Equip.ELRList;
+                decimal _TotalRent = list[0].H_TotalRent;
+                //decimal _TotalRent = list.Sum(x => x.Rental_Amt) - list.Sum(x => x.TripAdvanceAmt);
+                decimal _CGST = list.Sum(x => x.ServiceTax_Amt);
+                decimal _SGST = list.Sum(x => x.SwachhBharat_Amt);
+                decimal _IGST = list.Sum(x => x.KrishiKalyan_Amt);
+
+                decimal _CGST_Per = (_CGST / _TotalRent) * 100;
+                decimal _SGST_Per = (_SGST / _TotalRent) * 100;
+                decimal _IGST_Per = (_IGST / _TotalRent) * 100;
+
+
+                decimal _TotalHaltingCharge = list.Sum(x => x.HaltingCharge ?? 0);
+                decimal _TotalDiscount_Amt = list.Sum(x => x.Discount_Amt);
+                decimal _TotalAdvanceAmt = list.Sum(x => x.TripAdvanceAmt);
+                decimal _TotalPayableRent = list.Sum(x => x.Rental_Amt);
+
+                decimal _TotalFuelAmt = list.Sum(x => x.FuelAmt);
+                //Ashok Posting Start
+                DataTable PostingTable;
+
+                PostingTable = new DataTable();
+
+                DataColumn Auto = new DataColumn("SrNo", typeof(System.Int32));
+                PostingTable.Columns.Add(Auto);
+                PostingTable.Columns.Add("JTrans", typeof(String));
+                PostingTable.Columns.Add("JAcccode", typeof(String));
+                PostingTable.Columns.Add("Amount", typeof(Double));
+                PostingTable.PrimaryKey = new DataColumn[] { PostingTable.Columns["SrNo"] };
+
+                 
+
+                //Added by Ashok Date : 26/07/2022 As per instruction of Ghosh Sir 
+                if (Equip.VendorType == "C") //---- On Wheel Chennai --- Trailer hiring charges
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "1012", Convert.ToDouble(_TotalPayableRent) });
+                    //PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "1012", Convert.ToDouble(_TotalPayableRent) });
+                }
+                else //---- For Vendor/Supplier Control
+                {
+                    //PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "762", Convert.ToDouble(_TotalRent) });
+
+                    //Added by Ashok Date : 20/09/2022 As per instruction of Ghosh Sir 
+                    //PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "41", Convert.ToDouble(_TotalRent) });//Vendor/Supplier Control
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "41", Convert.ToDouble(_TotalPayableRent) });//Vendor/Supplier Control
+
+                }
+               
+                if (_TotalAdvanceAmt > 0)
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "390", _TotalAdvanceAmt }); //, 0, "", "0", "Halting Charges" 
+                }
+
+                if (_TotalFuelAmt > 0)
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "326", _TotalFuelAmt }); //, 0, "", "0", "Fuel & Diesel Expense" 
+                }
+
+                if (_TotalHaltingCharge > 0)
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "1158", _TotalHaltingCharge }); //, 0, "", "0", "Halting Charges" 
+                }
+
+                if (Equip.VendorType == "C" && _TotalDiscount_Amt > 0)  
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "1012", _TotalDiscount_Amt }); //, 0, "", "0", "Trailer hiring charges" 
+                }
+
+                if (Equip.VendorType == "M" && _TotalDiscount_Amt > 0)  
+                {  
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "762", _TotalDiscount_Amt }); //, 0, "", "0", "Transport Charges" 
+                }
+
+
+                if (_IGST > 0)
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "978", _IGST }); //, 0, "", "0", "IGST-CREDIT - CHENNAI" 
+                }
+                if (_CGST > 0)
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "980", _CGST }); //, 0, "", "0", "CGST-CREDIT - CHENNAI"
+                }
+                if (_SGST > 0)
+                {
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "D", "979", _SGST }); //, 0, "", "0", "SGST-CREDIT - CHENNAI"  
+                }
+
+                if (list[0].H_VendorOnAccount > 0)
+                {
+                    //Alter By Ashok Gupta ,Date 07/05/2022 , As per instuction of Rajib Ghosh Sir (From Vendor/Supplier On Account To Vendor/Supplier Advance)
+                    //PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "394", list[0].H_VendorOnAccount });
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "390", list[0].H_VendorOnAccount });
+                }
+
+                //if (list[0].H_TDS_Amount > 0)
+                //    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "399", list[0].H_TDS_Amount });
+                //Added by Ashok Date 06/08/2022
+                if (list[0].H_TDS_Amount > 0)
+                    PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "397", list[0].H_TDS_Amount });
+
+                 
+                PostingTable.Rows.Add(new Object[] { PostingTable.Rows.Count + 1, "C", "48", list[0].H_PayableAmt });
+
+                 
+                
+                double drAmt = 0, crAmt = 0;
+                if (Equip.StatusCode.Trim() == "A")
+                {
+                    drAmt = Math.Round(Convert.ToDouble(PostingTable.Compute("Sum(Amount)", "JTrans = 'D'").ToString()), 2);
+                    crAmt = Math.Round(Convert.ToDouble(PostingTable.Compute("Sum(Amount)", "JTrans = 'C'").ToString()), 2);
+                }
+                
+
+                if (drAmt == crAmt )
+                {
+                    List<usp_AssetListBy_Vendor_Result> venderGistn = db.usp_AssetListBy_Vendor(Equip.InsertVendorId).ToList<usp_AssetListBy_Vendor_Result>();
+                    if (venderGistn.Count > 0)
+                    {
+                        Equip.GST_Condition = venderGistn[0].GST_Condition ?? 0;
+                        if (venderGistn[0].fulladdress == null)
+                        {
+                            venderGistn[0].fulladdress = "";
+                        }
+                        Equip.Address = venderGistn[0].fulladdress;
+                        if (venderGistn[0].GSTIN != "")
+                        {
+                            Equip.GSTIN = venderGistn[0].GSTIN;
+                        }
+                        else
+                        {
+                            Equip.GSTIN = "";
+                        }
+                    }
+                    else
+                    {
+                        Equip.GSTIN = "1";
+                        Equip.GST_Condition = 0;
+                    }
+                    string result = ""; string hdn_GST_Regtd = "N";
+                    Equip.GSTIN = Equip.GSTIN ?? "";
+                    if (Equip.GSTIN.ToString() != "")
+                    {
+                        hdn_GST_Regtd = "Y";
+                    }
+
+                    if (Equip.VendorType == "C")
+                    {
+                        //string meno = "";
+                        string meno = "Being amount payable towards trailer hire charges for the month of " + list[0].Bill_Month + " against Bill No " + list[0].BillNo + " dt " + list[0].BillDate;
+                        if (list[0].H_TDS_Amount > 0)
+                        {
+                            meno = meno + " after deduction of TDS @ " + list[0].H_TDS_Per + " on " + _TotalRent;
+                        }
+                        result = Rent.VP_Insert_EquipmentRent_StatusLog(Convert.ToDouble(Equip.ELR_ID), Equip.Approval_DT.ToString("dd/MM/yyyy"), Equip.StatusCode, "Approve Equipment Rent Pay", Equip.ApprovalRemarks, Session["EmployeeCode"].ToString(),
+                               meno, Equip.ELR_CODE, PostingTable, Equip.CompanyCode, Equip.BranchCode, Equip.InsertVendorId, hdn_GST_Regtd, Equip.GSTIN.ToString(),
+                              _IGST_Per, _IGST, _CGST_Per, _CGST, _SGST_Per, _SGST, Equip.Address, list, Equip.H_TotalRent, Equip.H_TotalServiceTax, Equip.H_FinalRent, Equip.H_TDS_Amount, Equip.H_PayableAmt);
+
+                        if (result != "0")
+                        {
+                            if (result == "1")
+                            {
+                                Success(string.Format("<b>Equipment Lease Rent cancel Sucessfully.</b>"), true);
+                            }
+                            else
+                            {
+                                Success(string.Format("<b>Equipment Lease Rent Approve Sucessfully.</b>"), true);
+                            }
+                        }
+                        else
+                        {
+                            Warning(string.Format("<b>Equipment Lease Rent Approve Not Done : Try Again.</b>"), true);
+                            return View(Equip);
+                        }
+                    }
+                    else if (Equip.VendorType == "M")
+                    {
+                        //string meno = "Being amt paid towards market vehicle."; 
+
+                        //Start Added by Ashok Date : 20-09-2022
+                        DataSet ds = Rent.Fill_Market_Vehicle_Bill_Dtls(Convert.ToDouble(Equip.ELR_ID));
+
+                        StringBuilder sb = new StringBuilder();
+                        foreach (DataRow row in ds.Tables[0].Rows)
+                        {
+                            sb.AppendLine(string.Join(",", row.ItemArray));
+                        }
+
+                        string meno = "Being balance liability payable to " + Equip.VendorName + " against " + Equip.ELR_CODE + " , dated : " + Convert.ToString(ds.Tables[0].Rows[0]["PayableDate"]);
+                        //End Added by Ashok Date : 20-09-2022
+
+                        result = Rent.Insert_Market_Vehicle_Bill_StatusLog(Convert.ToDouble(Equip.ELR_ID), Equip.Approval_DT.ToString("dd/MM/yyyy"), Equip.StatusCode, "Approve Market Vehicle Bill", Equip.ApprovalRemarks, Session["EmployeeCode"].ToString(),
+                                   meno, Equip.ELR_CODE, PostingTable, Equip.CompanyCode, Equip.BranchCode, Equip.InsertVendorId, hdn_GST_Regtd, Equip.GSTIN.ToString(),
+                                    _IGST_Per, _IGST, _CGST_Per, _CGST, _SGST_Per, _SGST, Equip.Address, list, Equip.H_TotalRent, Equip.H_TotalServiceTax, Equip.H_FinalRent, Equip.H_TDS_Amount, Equip.H_PayableAmt);
+
+                        if (result != "0")
+                        {
+                            if (result == "1")
+                            {
+                                Success(string.Format("<b>Market vehicle bill is canceled sucessfully.</b>"), true);
+                            }
+                            else
+                            {
+                                Success(string.Format("<b>Market vehicle bill is approved sucessfully.</b>"), true);
+                            }
+                        }
+                        else
+                        {
+                            Warning(string.Format("<b>Market vehicle bill approval failed: Try Again.</b>"), true);
+                            return View(Equip);
+                        }
+                    }
+                }
+                else
+                {
+                    Warning(string.Format("<b>Debit Amount Must be Equal to Credit Amount.</b>"), true);
+                    return View(Equip);
+                }
+
+            }
+            catch
+            {
+
+            }
+
+            return RedirectToAction("EquipmentRent_Approval");
+
+        }
+
+
+        public ActionResult FAMS_EquipmentRent_Approval()
+        {
+            ViewBag.Header = "Rental Trailer Payment voucher Approval";
+            VM_EquipmentLeaseRent_Approval_FAMS Equip = new VM_EquipmentLeaseRent_Approval_FAMS();
+            Equip.VendorList = new SelectList(db.usp_FillVendorFor_Asset("C"), "VENDERID", "VENDORNAME");
+            string TillDate = "";
+            if (Equip.TillDate != null)
+            {
+                TillDate = Equip.TillDate;
+            }
+
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+            Equip.BranchCode = Convert.ToString(LogIn.Branch_Code);
+
+            var Result = Rent.Fill_EquipmentLeasePayable_Approval(Equip.CompanyCode, Equip.BranchCode, "A", TillDate, "0", "C");
+            List<VM_FAMS_EquipmentRentForApproval> ApprovalList = new List<VM_FAMS_EquipmentRentForApproval>();
+
+            foreach (DataRow dr in Result.Rows)
+            {
+                VM_FAMS_EquipmentRentForApproval _payable = new VM_FAMS_EquipmentRentForApproval();
+                _payable.ELRPay_Id = Convert.ToDecimal(dr["ELRPay_Id"]);
+                _payable.ELRPay_Code = dr["ELRPay_Code"].ToString();
+                _payable.ELRPay_Date = dr["ELRPay_Date"].ToString();
+                _payable.payTo = dr["payTo"].ToString();
+                _payable.payToId = Convert.ToDecimal(dr["payToId"]);
+                _payable.PayAmt = Convert.ToDecimal(dr["PayAmt"]);
+                _payable.Remarks = dr["Remarks"].ToString();
+                _payable.VehicleType = ((dr["VEH_TYPE"].ToString() == "C") ? "Contractual" : "Market");
+
+                ApprovalList.Add(_payable);
+            }
+
+            Equip.ApprovalList = ApprovalList;
+            return View(Equip);
+        }
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Show")]
+        [ActionName("FAMS_EquipmentRent_Approval")]
+        public ActionResult FAMS_EquipmentLeaseRent_Show(VM_EquipmentLeaseRent_Approval_FAMS Equip)
+        {
+            ViewBag.Header = "Rental Trailer Payment voucher Approval";
+
+            Equip.VendorList = new SelectList(db.usp_FillVendorFor_Asset("C"), "VENDERID", "VENDORNAME");
+            string TillDate = "";
+            if (Equip.TillDate != null)
+            {
+                TillDate = Equip.TillDate;
+            }
+
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+            Equip.BranchCode = Convert.ToString(LogIn.Branch_Code);
+
+            var Result = Rent.Fill_EquipmentLeasePayable_Approval(Equip.CompanyCode, Equip.BranchCode, "A", TillDate, Equip.VendorId ?? "0", Equip.VendorType);
+            List<VM_FAMS_EquipmentRentForApproval> ApprovalList = new List<VM_FAMS_EquipmentRentForApproval>();
+
+            foreach (DataRow dr in Result.Rows)
+            {
+                VM_FAMS_EquipmentRentForApproval _payable = new VM_FAMS_EquipmentRentForApproval();
+                _payable.ELRPay_Id = Convert.ToDecimal(dr["ELRPay_Id"]);
+                _payable.ELRPay_Code = dr["ELRPay_Code"].ToString();
+                _payable.ELRPay_Date = dr["ELRPay_Date"].ToString();
+                _payable.payTo = dr["payTo"].ToString();
+                _payable.payToId = Convert.ToDecimal(dr["payToId"]);
+                _payable.PayAmt = Convert.ToDecimal(dr["PayAmt"]);
+                _payable.Remarks = dr["Remarks"].ToString();
+                _payable.VehicleType = ((dr["VEH_TYPE"].ToString() == "C") ? "Contractual" : "Market");
+
+                ApprovalList.Add(_payable);
+            }
+
+            Equip.ApprovalList = ApprovalList;
+
+            return View(Equip);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Approved")]
+        [ActionName("FAMS_EquipmentRent_Approval")]
+        public ActionResult FAMS_EquipmentRent_Approval_Approved(VM_EquipmentLeaseRent_Approval_FAMS Equip)
+        {
+            ViewBag.Header = "Rental Trailer Payment voucher Approval";
+            try
+            {
+                SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+                Equip.BranchCode = Convert.ToString(LogIn.Branch_Code);
+
+                List<VM_FAMS_EquipmentRentForApproval> _ApprovalList = Equip.ApprovalList.Where(x => x.IsChecked == true).ToList<VM_FAMS_EquipmentRentForApproval>();
+                int result = 0;
+                if (_ApprovalList.Count > 0)
+                {
+                    result = Rent.Insert_EquipmentLease_PayableLog(Equip.TransactionDate.ToString("dd/MM/yyyy"), _ApprovalList, "A", Equip.ApprovalRemark, Session["EmployeeCode"].ToString());
+
+                    if (result > 0)
+                    {
+                        Success(string.Format("<b>Approved Successfully.</b>"), true);
+                    }
+                    else if (result < 0)
+                    {
+                        Warning(string.Format("<b>Voucher Already Approved !!!.</b>"), true);
+                    }
+                    else
+                    {
+                        Warning(string.Format("<b>Record Approval Failed !!!.</b>"), true);
+                    }
+                }
+                else
+                {
+                    Warning(string.Format("<b>Please select atleast one equipment for Approval.</b>"), true);
+
+                    ViewBag.Header = "Equipment Lease Rent Approval - FAMS";
+
+                    Equip.VendorList = new SelectList(db.usp_FillVendorFor_Asset("C"), "VENDERID", "VENDORNAME");
+                    string TillDate = "";
+                    if (Equip.TillDate != null)
+                    {
+                        TillDate = Equip.TillDate;
+                    }
+
+
+                    var Result = Rent.Fill_EquipmentLeasePayable_Approval(Equip.CompanyCode, Equip.BranchCode, "A", TillDate, Equip.VendorId.ToString(), Equip.VendorType);
+                    List<VM_FAMS_EquipmentRentForApproval> ApprovalList = new List<VM_FAMS_EquipmentRentForApproval>();
+
+                    foreach (DataRow dr in Result.Rows)
+                    {
+                        VM_FAMS_EquipmentRentForApproval _payable = new VM_FAMS_EquipmentRentForApproval();
+                        _payable.ELRPay_Id = Convert.ToDecimal(dr["ELRPay_Id"]);
+                        _payable.ELRPay_Code = dr["ELRPay_Code"].ToString();
+                        _payable.ELRPay_Date = dr["ELRPay_Date"].ToString();
+                        _payable.payTo = dr["payTo"].ToString();
+                        _payable.payToId = Convert.ToDecimal(dr["payToId"]);
+                        _payable.PayAmt = Convert.ToDecimal(dr["PayAmt"]);
+                        _payable.Remarks = dr["Remarks"].ToString();
+
+                        ApprovalList.Add(_payable);
+                    }
+
+                    Equip.ApprovalList = ApprovalList;
+
+
+                    return View(Equip);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Warning(string.Format("<b>" + ex.Message + "</b>"), true);
+            }
+
+            return RedirectToAction("FAMS_EquipmentRent_Approval");
+
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Reject")]
+        [ActionName("FAMS_EquipmentRent_Approval")]
+        public ActionResult FAMS_EquipmentRent_Approval_Reject(VM_EquipmentLeaseRent_Approval_FAMS Equip)
+        {
+            ViewBag.Header = "Rental Trailer Payment voucher Approval";
+            try
+            {
+                List<VM_FAMS_EquipmentRentForApproval> _ApprovalList = Equip.ApprovalList.Where(x => x.IsChecked == true).ToList<VM_FAMS_EquipmentRentForApproval>();
+                int result = 0;
+                if (_ApprovalList.Count > 0)
+                {
+                    result = Rent.Insert_EquipmentLease_PayableLog(Equip.TransactionDate.ToString("dd/MM/yyyy"), _ApprovalList, "R", Equip.ApprovalRemark, Session["EmployeeCode"].ToString());
+
+                    if (result > 0)
+                    {
+                        Success(string.Format("<b>Rejected Successfully.</b>"), true);
+                    }
+                    else if (result < 0)
+                    {
+                        Warning(string.Format("<b>Voucher Already Rejected !!!.</b>"), true);
+                    }
+                    else
+                    {
+                        Warning(string.Format("<b>Record Rejection Failed !!!.</b>"), true);
+                    }
+                }
+                else
+                {
+                    Warning(string.Format("<b>Please select atleast one equipment for rejection.</b>"), true);
+                    ViewBag.Header = "Equipment Lease Rent Approval - FAMS";
+
+                    Equip.VendorList = new SelectList(db.usp_FillVendorFor_Asset("C"), "VENDERID", "VENDORNAME");
+                    string TillDate = "";
+                    if (Equip.TillDate != null)
+                    {
+                        TillDate = Equip.TillDate;
+                    }
+
+
+                    var Result = Rent.Fill_EquipmentLeasePayable_Approval(Equip.CompanyCode, Equip.BranchCode, "A", TillDate, Equip.VendorId.ToString(), Equip.VendorType);
+                    List<VM_FAMS_EquipmentRentForApproval> ApprovalList = new List<VM_FAMS_EquipmentRentForApproval>();
+
+                    foreach (DataRow dr in Result.Rows)
+                    {
+                        VM_FAMS_EquipmentRentForApproval _payable = new VM_FAMS_EquipmentRentForApproval();
+                        _payable.ELRPay_Id = Convert.ToDecimal(dr["ELRPay_Id"]);
+                        _payable.ELRPay_Code = dr["ELRPay_Code"].ToString();
+                        _payable.ELRPay_Date = dr["ELRPay_Date"].ToString();
+                        _payable.payTo = dr["payTo"].ToString();
+                        _payable.payToId = Convert.ToDecimal(dr["payToId"]);
+                        _payable.PayAmt = Convert.ToDecimal(dr["PayAmt"]);
+                        _payable.Remarks = dr["Remarks"].ToString();
+
+                        ApprovalList.Add(_payable);
+                    }
+
+                    Equip.ApprovalList = ApprovalList;
+
+                    return View(Equip);
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Warning(string.Format("<b>" + ex.Message + "</b>"), true);
+            }
+
+            return RedirectToAction("FAMS_EquipmentRent_Approval");
+
+        }
+
+
+    }
+}
+
+
+______________________________________________________________EquipmentRent_approval.cshtml_________________________________________________________
+
+@model MVCConsignment.ViewModel.VM_EquipmentLeaseRent_Approval
+
+@{
+    ViewBag.Title = "EquipmentRent_Approval";
+    Layout = "~/Views/Shared/_MainDashboard.cshtml";
+}
+
+@using PagedList.Mvc;
+
+<style type="text/css">
+    @@media(min-width: 992px) {
+
+        .col-md-13 {
+            width: 48%;
+            float: left;
+        }
+    }
+</style>
+
+@using (Html.BeginForm("EquipmentRent_Approval", "Approval", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    Html.RenderPartial("_Alerts");
+
+
+    <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <b id="alertMessage"></b>
+    </div>
+
+    <div class="row" style="padding-bottom:5px;">
+        <div id="no-4-tables">
+            <table class="col-md-12 table-bordered table-striped table-condensed cf" style="table-layout:fixed;">
+                <tbody>
+                    <tr>
+                        <td class="col-md-2">Vendor Type</td>
+                        <td data-title="Vendor Type" class="col-md-4" colspan="2">
+                            <div class="col-md-12" style="padding:0px 0px 0px 0px;text-align:left">
+                                @foreach (var act in Model.VendorTypeList)
+                                {
+                                    <label>
+                                        @if (act.Id == "M")
+                                        {
+                                            @Html.RadioButtonFor(m => m.VendorType, act.Id, new { @Style = "width:25px;", @class = "rdVendorType" })
+                                        }
+                                        else
+                                        {
+                                            @Html.RadioButtonFor(m => m.VendorType, act.Id, new { @checked = true, @Style = "width:25px;", @class = "rdVendorType" })
+                                        }
+                                        @act.Name
+                                    </label>
+                                }
+                            </div>
+                        </td>
+                        <td class="col-md-2">Vendor Name</td>
+                        <td data-title="Vendor Name" class="col-md-4" colspan="2">
+                            @Html.DropDownListFor(x => x.VendorId, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "---- Select ----", new { @class = "form-control", @id = "ddlVendor" })
+                            @*@Html.DropDownListFor(x => x.VendorId, Model.VendorList, "---- Select -----", new { @class = "form-control", @id = "ddlVendor" })*@
+                            <div class="speech-bubble"> @Html.ValidationMessageFor(model => model.VendorId)</div>
+                            @Html.HiddenFor(model => model.VendorName, new { @id = "hdnVendorName" })
+                        </td>
+                    </tr>
+                    <tr>
+                        <td data-title="From Date">From Date</td>
+                        <td data-title="From Date">
+                            @Html.TextBoxFor(model => model.FROM_DT, new { @class = "form-control", @type = "date", @id = "txtFromDt" })
+                            <div class="speech-bubble">
+                                <span class="field-validation-error" id="Error_txtFromDt"></span>
+                            </div>
+                        </td>
+                        <td data-title="To Date">To Date</td>
+                        <td data-title="To Date">
+                            @Html.TextBoxFor(model => model.TO_DT, new { @class = "form-control", @id = "txtToDt", @type = "date" })
+                            <div class="speech-bubble">
+                                <span class="field-validation-error" id="Error_txtToDt"></span>
+                            </div>
+                        </td>
+
+                        <td class="col-md-2">GSTIN Info</td>
+                        <td data-title="GSTIN Info" class="col-md-2">
+                            <span id="lblGSTIN" style="font-weight: bold; font-size:14px; color: red;"> GSTIN Unregistered !!!</span>
+                            @Html.HiddenFor(x => x.GSTIN, new { @id = "hdnGSTIN" })
+                            @Html.HiddenFor(x => x.GST_Condition, new { @id = "hdnGST_Cond" })
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="col-md-2">Address</td>
+                        <td data-title="Address" class="col-md-10" colspan="5">
+
+                            <span id="lblAddress" style="font-weight: bold; font-size:14px; color: red;">@Model.Address</span>
+                            @Html.HiddenFor(x => x.Address, new { @id = "hdnAddress" }) &nbsp;
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row" style="padding-bottom:5px;text-align:center;">
+        <div class="form-group">
+            <div class="col-md-12">
+                <input type="submit" class="btn btn-success" value="Show" name="Show" style="margin-top:5px;margin-bottom:5px;width:80px;" id="btnSearch" />
+            </div>
+        </div>
+    </div>
+
+    if (Model.ApprovalList != null)
+    {
+        if (Model.ApprovalList.Count() > 0)
+        {
+            <div id="divdata">
+                <div class="row" style="padding-bottom:5px;">
+                    <div class="form-group page-header">
+                        <div class="col-md-12">
+                            List Of Payable Entry
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="padding-bottom:5px;">
+                    <div id="no-more-tables" style="padding-bottom: 0px; margin-right: 0px; margin-left: 0px;">
+                        <table class="col-md-12 table-bordered table-striped table-condensed cf" id="tblEquipment" style="padding-left: 0px; padding-right: 0px;font-size:9.0pt;">
+                            <thead class="cf">
+                                <tr>
+                                    <th>Sr No.</th>
+                                    <th class="numeric">Payable Code</th>
+                                    <th class="numeric">Vendor Name</th>
+                                    <th class="numeric">Bill Date</th>
+                                    <th class="numeric">Bill Month</th>
+                                    <th class="numeric">Rent</th>
+                                    <th class="numeric">Service Tax</th>
+                                    <th class="numeric">Final Rent</th>
+                                    <th class="numeric">TDS Amount</th>
+                                    <th class="numeric">Payable Amt</th>
+                                    <th class="numeric">Bill Copy</th>
+
+                                    <th class="numeric">View</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.ApprovalList.Count(); i++)
+                                {
+                                    <tr>
+                                        <td data-title="Sr No." style="text-align:center">
+                                            @(i + 1)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].AssetType_Code)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].Branch_Code)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].ELR_ID)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].ELR_CODE)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].PayableDate)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].Period)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].FILE_ATTACH)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].FinalRent)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].PayableAmt)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].TDS_Amount)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].TDS_Per)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].TotalRent)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].TotalServiceTax)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].VendorCode, new { @id = "hdnVendorCode_" + i })
+
+
+                                        </td>
+                                        <td data-title="Payable Code" class="tdCenter">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].ELR_CODE)
+                                        </td>
+                                        <td data-title="Vendor Name">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].VENDERNAME)
+                                        </td>
+                                        <td data-title="Bill Date" class="tdCenter">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].PayableDate)
+
+                                        </td>
+                                        <td data-title="Bill Month" class="tdCenter">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].Period)
+                                        </td>
+                                        <td data-title="Rent" class="tdRight">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].TotalRent)
+                                        </td>
+                                        <td data-title="Service Tax" class="tdRight">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].TotalServiceTax)
+                                        </td>
+                                        <td data-title="Final Rent" class="tdRight">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].FinalRent)
+                                        </td>
+                                        <td data-title="TDS Amount" class="tdRight">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].TDS_Amount)
+                                        </td>
+                                        <td data-title="Payable Amt" class="tdRight">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].PayableAmt)
+                                        </td>
+
+                                        <td data-title="Bill Copy" class="tdCenter">
+                                            @if (Model.ApprovalList[i].FILE_ATTACH == "Y")
+                                            {
+                                                <button type="button" id="btnAttach_@(i + 1)" class="btn-link"><i class="glyphicon glyphicon-pushpin"></i> </button>
+                                            }
+                                            &nbsp;
+                                        </td>
+                                        <td data-title="View" class="tdCenter">
+                                            @*<input type="submit" class="btn btn-success" value="Show" name="View" style="margin-top:5px;margin-bottom:5px;width:80px;" id="btnSearch" />*@
+                                            <button type="button" id="@Model.ApprovalList[i].ELR_ID" class="btn-link  view"><i class="glyphicon glyphicon-eye-open"></i> </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div id="dtls" style="display:none;">
+                    <div class="row" style="padding-bottom:5px;">
+                        <div class="form-group page-header">
+                            <div class="col-md-12">
+                                List Of Payable Details : <span id="lblELR_CODE" style="font-weight: bold; font-size:14px; color: red;"> </span>
+                                @Html.HiddenFor(modelItem => Model.ELR_ID, new { @ID = "lblELR_ID" })
+                                @Html.HiddenFor(modelItem => Model.ELR_CODE, new { @ID = "hdnELR_CODE" })
+                                @Html.HiddenFor(modelItem => Model.InsertVendorId, new { @ID = "hdnInsertVendorId" })
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row" style="padding-bottom:5px;">
+                        <div id="no-more-tables" style="padding-bottom: 0px; margin-right: 0px; margin-left: 0px;">
+                            <table class="col-md-12 table-bordered table-striped table-condensed cf" id="tblEquipmentDtl" style="padding-left: 0px; padding-right: 0px;font-size:9.0pt;">
+                                <thead class="cf">
+                                    <tr>
+                                        <th style="text-align:center">Sr No.</th>
+                                        @if (Model.VendorType == "C" || Model.VendorType == null)
+                                        {
+                                            <th class="numeric">Asset Name</th>
+                                        }
+                                        @if (Model.VendorType == "M")
+                                        {
+                                            <th class="numeric">Job Code</th>
+                                            <th class="numeric">Job Date</th>
+                                        }
+                                        <th class="numeric">Registration No</th>
+                                        <th class="numeric">Rental Amt</th>
+                                        @if (Model.VendorType == "M")
+                                        {
+                                            <th class="numeric">Halting Charges</th>
+                                        }
+                                        @if (Model.VendorType == "C" || Model.VendorType == null)
+                                        {
+                                            <th class="numeric">Incentive Amt</th>
+                                            <th class="numeric">Sys Deduction Amt</th>
+                                            <th class="numeric">Actual Sys Deduct Amt</th>
+                                        }
+                                        <th class="numeric">Trip Adv.</th>
+                                        <th class="numeric">Discount</th>
+                                        <th class="numeric">CGST (%) & Amt </th>
+                                        <th class="numeric">SGST (%) & Amt</th>
+                                        <th class="numeric">IGST (%) & Amt</th>
+                                        <th class="numeric">Tax Amt</th>
+                                        <th class="numeric">Total Rent Amt</th>
+                                    </tr>
+                                </thead>
+
+                            </table>
+                        </div>
+
+                        <div id="no-2-tables">
+                            <table class="table-bordered table-striped table-condensed cf" style="table-layout:fixed;" id="tblFooter">
+                                <tbody>
+                                    <tr>
+                                        <td class="col-md-2" style="background-color: #b5b1b1;">Total Rent Amount</td>
+                                        <td data-title="Total Rent Amt" class="col-md-2" style="background-color: #b5b1b1;"></td>
+                                        <td class="col-md-2" style="background-color: #b5b1b1;">Total Discount</td>
+                                        <td data-title="Total Discount" class="col-md-2" style="background-color: #b5b1b1;">
+                                        <td class="col-md-2" style="background-color: #b5b1b1;">Total Service Tax</td>
+                                        <td data-title="Total Tax" class="col-md-2" style="background-color: #b5b1b1;"></td>
+                                        <td class="col-md-2" style="background-color: #b5b1b1;">Total Amount</td>
+                                        <td data-title="Total Amount" class="col-md-2" style="background-color: #b5b1b1;"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="no-2-tables">
+                            <table class="table-bordered table-striped table-condensed cf" style="table-layout:fixed;" id="tblApproval">
+                                <tbody>
+                                    <tr>
+                                        <td class="col-md-2">Total Rent Amount</td>
+                                        <td data-title="Total Rent Amt" class="col-md-2">
+                                            <span id="TotalRent"></span>
+                                        </td>
+                                        <td class="col-md-2">TDS Amount</td>
+                                        <td data-title="TDS Amount" class="col-md-2">
+                                            <span id="TDS_Amount"></span> ( <span id="TDS_PER"></span> %)
+                                        </td>
+                                        <td class="col-md-2">Vendor On Account</td>
+                                        <td data-title="Vendor On Account" class="col-md-2">
+                                            <span id="VendorOnAccount"></span>
+
+                                        </td>
+                                    </tr>
+
+                                    <tr>
+                                        <td class="col-md-2">Payable Amount</td>
+                                        <td data-title="Payable Amount" class="col-md-2">
+                                            <span id="PayableAmt"></span>
+                                        </td>
+                                        <td class="col-md-2">Payable Remarks</td>
+                                        <td data-title="Payable Remarks" class="col-md-6" colspan="3">
+                                            <span id="Remarks"></span>
+                                        </td>
+
+                                    </tr>
+                                    <tr>
+                                        <td class="col-md-2">Approval Date</td>
+                                        <td data-title="Approval Date" class="col-md-2">
+                                            @Html.TextBoxFor(model => model.Approval_DT, new { @class = "form-control", @type = "date", @id = "txtApprovalDt" })
+                                            <div class="speech-bubble">
+                                                @*@Html.ValidationMessageFor(model => model.Approval_DT)*@
+                                                <span class="field-validation-error" id="ErrorApprovalDate">Select Approval Date</span>
+                                            </div>
+
+
+                                            @Html.Hidden("hdnPayableDate", "")
+                                        </td>
+                                        <td class="col-md-2">Status</td>
+                                        <td data-title="Status" class="col-md-6" colspan="3">
+                                            @Html.DropDownListFor(x => x.StatusCode, Model.StatusList, "---- Select -----", new { @class = "form-control", @id = "ddlStatus" })
+                                            <div class="speech-bubble"> @Html.ValidationMessageFor(model => model.StatusCode)</div>
+
+                                        </td>
+                                    </tr>
+                                    <tr>
+
+                                        <td class="col-md-2">Remarks</td>
+                                        <td data-title="Payable Remarks" class="col-md-10" colspan="5">
+                                            @Html.TextBoxFor(model => model.ApprovalRemarks, new { @class = "form-control", @id = "txtApprovalRemarks",@autocomplete="off" })
+                                            <div class="speech-bubble"> @Html.ValidationMessageFor(model => model.ApprovalRemarks)</div>
+                                        </td>
+
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+
+                    </div>
+
+
+                    <div class="row" style="padding-bottom:5px;text-align:center;">
+                        <div class="form-group">
+                            <div class="col-md-12">
+                                <input type="submit" class="btn btn-success" value="Approval" name="Save" style="margin-top:5px;margin-bottom:5px;width:120px;" id="btnSubmit" />
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row" style="padding:0px;text-align:center;">
+                <b style="color:red;font-weight:16px;">Record not found. Bill payble for selected Equipment is already done..</b>
+            </div>
+        }
+    }
+}
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+<style type="text/css">
+    .ui-dialog {
+        z-index: 1000000 !important;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+
+        $('.rdVendorType').change(function () {
+            $("#hdnVendorName").val('');
+            BindVendor();
+            BindVehicle();
+            $("#divdata").hide();
+        })
+        BindVendor();
+        function BindVendor() {
+            var vt = $(".rdVendorType:checked").val();
+            if (vt != '') {
+                $("#ddlVendor").empty();
+                $.ajax({
+                    type: 'GET',
+                    async: false,
+                    url: '@Url.Action("Select_Vendor_Of_Vehicle_For_Billing", "Payable")',
+                    data: { vt: vt },
+                    success: function (json, xhr, textStatus) {
+                        $("#ddlVendor").append('<option value="">---- Select ----</option>');
+                        for (var i = 0; i < json.length; i++) {
+                            if (vt == 'C')
+                                $("#ddlVendor").append('<option value="' + json[i].VENDERID + '">' + json[i].VENDORNAME + '</option>');
+                            else
+                                $("#ddlVendor").append('<option value="' + json[i].VENDERID + '">' + json[i].VENDERNAME + '</option>');
+                        }
+                        if (!($('#hdnVendorName').val() == null || $('#hdnVendorName').val() == '')) {
+                            //$("#ddlVendor option:contains(" + $('#hdnVendorName').val() + ")").attr('selected', 'selected');
+                            $('#ddlVendor option').filter(function () {
+                                return ($(this).text() == $('#hdnVendorName').val()); //To select Blue
+                            }).prop('selected', true);
+                        }
+                        else {
+                            $("#ddlVendor").val('');
+                        }
+                    }
+                });
+            }
+        }
+
+        function BindVehicle() {
+            var vt = $(".rdVendorType:checked").val();
+            var vendorName = $("select[id*=ddlVendor] option:selected").text();
+            $('#hdnVendorName').val(vendorName);
+            if (vt == 'M') {
+                MarketVehicleBinding(vendorName);
+            }
+            else {
+                var VendorID = $("select[id*=ddlVendor] option:selected").val();
+                VehicleBinding(VendorID);
+            }
+        }
+
+        BindVehicle();
+        $("#ddlVendor").change(function () {
+            BindVehicle();
+            $("#divdata").hide();
+        });
+
+        function VehicleBinding(VendorID) {
+            var lblGSTIN = $("#lblGSTIN");
+            var hdnGSTIN = $("#hdnGSTIN");
+            var hdnGST_Cond = $("#hdnGST_Cond");
+
+            var lblAddress = $("#lblAddress");
+            var hdnAddress = $("#hdnAddress");
+
+            if (VendorID != "") {
+                $.getJSON('/Common/AssetList', { VendorID: VendorID }, function (data) {
+                    if (data.length > 0) {
+                        hdnGST_Cond.val(data[0].GST_Condition);
+
+                        if (data[0].fulladdress == null) {
+                            data[0].fulladdress = "";
+                        }
+                        lblAddress.text(data[0].fulladdress);
+                        hdnAddress.val(data[0].fulladdress);
+
+                        if (data[0].GSTIN != "") {
+                            lblGSTIN.text(data[0].GSTIN);
+                            hdnGSTIN.val(data[0].GSTIN);
+                        }
+                        else {
+                            lblGSTIN.text("GSTIN Unregistered !!!");
+                            hdnGSTIN.val("");
+                        }
+                    }
+                    else {
+
+                        lblGSTIN.text("GSTIN Unregistered !!!");
+                        hdnGSTIN.val("1");
+                        hdnGST_Cond.val("");
+                    }
+
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                    alert('Error!' + errorThrown);
+                });
+            } else {
+
+            }
+        }
+
+        function MarketVehicleBinding(vendorName) {
+            var lblGSTIN = $("#lblGSTIN");
+            var hdnGSTIN = $("#hdnGSTIN");
+            var hdnGST_Cond = $("#hdnGST_Cond");
+            var lblAddress = $("#lblAddress");
+            var hdnAddress = $("#hdnAddress");
+
+            if (vendorName != '') {
+                $.ajax({
+                    type: 'GET',
+                    async: false,
+                    url: '@Url.Action("Select_Market_Vehicle_Vendor_Wise", "Payable")',
+                    data: { vendorName: vendorName },
+                    success: function (json, xhr, textStatus) {
+                        if (json.length > 0) {
+                            hdnGST_Cond.val(json[0].GST_Condition);
+                            if (json[0].fulladdress == null) {
+                                json[0].fulladdress = "";
+                            }
+
+                            lblAddress.text(json[0].fulladdress);
+                            hdnAddress.val(json[0].fulladdress);
+                            if (json[0].GSTIN != "") {
+                                lblGSTIN.text(json[0].GSTIN);
+                                hdnGSTIN.val(json[0].GSTIN);
+                            }
+                            else {
+                                lblGSTIN.text("GSTIN Unregistered !!!");
+                                hdnGSTIN.val("");
+                            }
+                        }
+                        else {
+                            lblGSTIN.text("GSTIN Unregistered !!!");
+                            hdnGSTIN.val("1");
+                            hdnGST_Cond.val("");
+                        }
+                    }
+                });
+            }
+        }
+
+        $('#btnSearch').click(function () {
+            $('#divdata').hide();
+            var From = $('#txtFromDt').val();
+            var To = $('#txtToDt').val();
+            if (From == '' && To != '') {
+                $("#Error_txtFromDt").show().text('Select from date');
+                Validate();
+                return false;
+            }
+            if (From != '' && To == '') {
+                $("#Error_txtToDt").show().text('Select to date');
+                Validate();
+                return false;
+            }
+            if (From == '' && To == '') {
+                $("#Error_txtFromDt").show().text('');
+                $("#Error_txtToDt").show().text('');
+                Validate();
+            }
+
+            if (From != '' && To != '') {
+                var fromDate = new Date(From);
+                var ToDate = new Date(To);
+                if (ToDate < fromDate) {
+                    $("span[id$=Error_txtToDt]").text('To Date must be grater than From Date.').show();
+                    $('#txtToDt').val('');
+                    Validate();
+                    return false;
+                }
+            }
+
+
+        });
+
+
+        $(".view").click(function () {
+
+
+            $("#dtls").show();
+            var PayableDate = $(this).closest('tr').find("[data-title='Payable Date']").text().trim();
+            $("#hdnPayableDate").val(PayableDate);
+
+            var lblELR_CODE = $(this).closest('tr').find("[data-title='Payable Code']").text().trim();
+            var vendorName = $(this).closest('tr').find("[data-title='Vendor Name']").text().trim();
+            $("#lblELR_CODE").html(lblELR_CODE + ",&nbsp;&nbsp;&nbsp;&nbsp;Vendor Name:&nbsp;" + vendorName);
+
+            var Rent = $(this).closest('tr').find("[data-title='Rent']").text().trim();
+            $("#tblFooter tr td[data-title='Total Rent Amt']").text(": " + Rent);
+
+            var Discount = $("#tblFooter tr td[data-title='Total Discount']");
+
+            var ServiceTax = $(this).closest('tr').find("[data-title='Service Tax']").text().trim();
+            $("#tblFooter tr td[data-title='Total Tax']").text(": " + ServiceTax);
+
+            var FinalRent = $(this).closest('tr').find("[data-title='Final Rent']").text().trim();
+            $("#tblFooter tr td[data-title='Total Amount']").text(": " + FinalRent);
+
+            $("#TotalRent").text(FinalRent);
+
+
+            var TDS_Amount = $("#TDS_Amount");
+            var TDS_PER = $("#TDS_PER");
+            var VendorOnAccount = $("#VendorOnAccount");
+            var PayableAmt = $("#PayableAmt");
+            var Remarks = $("#Remarks");
+            var InsertVendorId = $(this).closest('tr').find("[id*='hdnVendorCode_']").val();
+            
+            $("#hdnInsertVendorId").val(InsertVendorId);
+
+            var ELR_ID = parseFloat($(this).attr('id'));
+            $("#lblELR_ID").val(ELR_ID);
+            $("#hdnELR_CODE").val(lblELR_CODE);
+            var vt = $(".rdVendorType:checked").val() == null ? 'C' : $(".rdVendorType:checked").val();
+           
+            var Searchdata = { ELR_ID: ELR_ID, VendorType: vt };
+            $('#tblEquipmentDtl tbody').empty();
+            $.ajax({
+                type: "POST",
+                async: false,
+                contentType: "application/json; charset=utf-8",
+                url: "/Approval/Fill_EquipmentRent_Dtls",
+                data: JSON.stringify(Searchdata),
+                dataType: "json",
+                success: function (json) {
+
+                    if (json.length > 0) {
+                        var TotDiscount = 0;
+                        var tbodyItem = "<tbody>";
+                        for (var i = 0; i < json.length; i++) {
+                            {
+                                tbodyItem += "<tr><td data-title='Sr No.' class='tdCenter'>" + json[i].SLNO + "</td>";
+                                if (vt == 'C') {
+                                    tbodyItem += "<td data-title='Asset Name' class='tdCenter'>" + json[i].Asset_Name + "</td>";
+                                }
+                                if (vt == "M") {
+                                    tbodyItem += "<td data-title='Job Code' class='tdCenter'>" + json[i].Job_Code + "</td>";
+                                    tbodyItem += "<td data-title='Job Date' class='tdCenter'>" + json[i].Job_Date + "</td>";
+                                }
+                                tbodyItem += "<td data-title='Asset Name' class='tdCenter'>" + json[i].Registration_No + "</td>";
+                                tbodyItem += "<td data-title='Rental Amt' class='tdCenter'>" + json[i].Rental_Amt + "</td>";
+                                if (vt == "M") {
+                                    tbodyItem += "<td data-title='Halting Charges' class='tdRight'>" + json[i].HaltingCharge + "</td>";
+                                }
+
+                                if (vt == 'C') {
+                                    tbodyItem += "<td data-title='Incentive Amt' class='tdCenter'>" + json[i].IncentiveAmt + "</td>";
+                                    tbodyItem += "<td data-title='Sys De Amt' class='tdCenter'>" + json[i].System_Deduction_Amt + "</td>";
+                                    tbodyItem += "<td data-title='Act Sys Ded Amt' class='tdCenter'>" + json[i].Actual_Sys_Deduction_Amt + "</td>";
+                                }
+                                tbodyItem += "<td data-title='Trip Adv.' class='tdCenter'>" + json[i].TripAdvanceAmt + "</td>";
+                                tbodyItem += "<td data-title='Discount' class='tdCenter'>" + json[i].Discount_Amt + "</td>";
+                                tbodyItem += "<td data-title='CGST (%) & Amt' class='tdCenter'>" + json[i].ServiceTax_Per + "(%) - " + json[i].ServiceTax_Amt + "</td>";
+                                tbodyItem += "<td data-title='SGST (%) & Amt' class='tdCenter'>" + json[i].SwachhBharat_Per + "(%) - " + json[i].SwachhBharat_Amt + "</td>";
+                                tbodyItem += "<td data-title='IGST (%) & Amt' class='tdCenter'>" + json[i].KrishiKalyan_Per + "(%) - " + json[i].KrishiKalyan_Amt + "</td>";
+                                tbodyItem += "<td data-title='Tax Amt' class='tdCenter'>" + json[i].TotalServiceTax + "</td>";
+                                tbodyItem += "<td data-title='Total Rent Amt' class='tdCenter'>" + json[i].TotalRent_Amt + "</td>";
+                                tbodyItem += "</tr>"
+                                TotDiscount = TotDiscount + parseFloat(json[i].Discount_Amt);
+                            }
+                        }
+                        Discount.text(": " + TotDiscount);
+                        TDS_Amount.text(json[0].H_TDS_Amount);
+                        TDS_PER.text(json[0].H_TDS_Per);
+                        VendorOnAccount.text(json[0].H_VendorOnAccount);
+                        PayableAmt.text(json[0].H_PayableAmt);
+                        Remarks.text(json[0].H_Remarks);
+
+
+
+                        $('#tblEquipmentDtl').append(tbodyItem);
+
+
+
+
+                    }
+                    else {
+
+
+                    }
+                },
+                error: function (result) {
+                    alert("Error");
+                }
+            });
+
+
+        });
+
+
+        $(".speech-bubble").hide();
+        $("input[type=text]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+        $("select").on('keyup keypress blur change', function (e) {
+            Validate();
+        });
+        $("input[type=date]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+
+        function Validate() {
+            $(".speech-bubble").hide();
+            $(".speech-bubble").each(function () {
+                if ($(this).find('.field-validation-error').text() == "") {
+                    $(this).hide();
+                    return true;
+                }
+                else {
+                    $(this).show();
+                    return false;
+                }
+            });
+        }
+
+        $('#txtApprovalDt').blur(function (e) {
+            if ($(this).val() != "") {
+                var _pDate = $("#hdnPayableDate").val().split('/');
+                var PayableDate = _pDate[1] + '/' + _pDate[0] + '/' + _pDate[2];
+
+                var ApprovalDt = $('#txtApprovalDt').val();
+
+                var fromDate = new Date(PayableDate);
+                var ToDate = new Date(ApprovalDt);
+
+                if (ToDate < fromDate) {
+                    $("#txtApprovalDt").val('');
+
+                    $("#ErrorApprovalDate").text("Approval date is greater than or equale to Bill date").show();
+                    e.preventDefault();
+                }
+                else {
+                    $("#ErrorApprovalDate").text("").show();
+                }
+            }
+            else {
+                $("#ErrorApprovalDate").text("Select Approval Date").show();
+            }
+        });
+    });
+</script>
+
+
+________________________________________________________________________FAMS_EquipmentRent_Approval.cshtml________________________________________________________
+
+@model MVCConsignment.ViewModel.VM_EquipmentLeaseRent_Approval_FAMS
+
+@{
+    ViewBag.Title = "EquipmentRent_Approval";
+    Layout = "~/Views/Shared/_MainDashboard.cshtml";
+}
+
+@using PagedList.Mvc;
+
+<style type="text/css">
+    @@media(min-width: 992px) {
+
+        .col-md-13 {
+            width: 48%;
+            float: left;
+        }
+    }
+</style>
+
+@using (Html.BeginForm("FAMS_EquipmentRent_Approval", "Approval", FormMethod.Post, new { enctype = "multipart/form-data" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    Html.RenderPartial("_Alerts");
+
+
+    <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <b id="alertMessage"></b>
+    </div>
+
+    <div class="row" style="padding-bottom:5px;">
+        <div id="no-4-tables">
+            <table class="col-md-12 table-bordered table-striped table-condensed cf" style="table-layout:fixed;">
+                <tbody>
+                    <tr>
+                        <td class="col-md-2">Vendor Type</td>
+                        <td data-title="Vendor Type" class="col-md-3">
+                            <div class="col-md-12" style="padding:0px 0px 0px 0px;text-align:left">
+                                @foreach (var act in Model.VendorTypeList)
+                                {
+                                    <label>
+                                        @if (act.Id == "M")
+                                        {
+                                            @Html.RadioButtonFor(m => m.VendorType, act.Id, new { @Style = "width:25px;", @class = "rdVendorType" })
+                                        }
+                                        else
+                                        {
+                                            @Html.RadioButtonFor(m => m.VendorType, act.Id, new { @checked = true, @Style = "width:25px;", @class = "rdVendorType" })
+                                        }
+                                        @act.Name
+                                    </label>
+                                }
+                            </div>
+
+                        </td>
+                        <td class="col-md-2">Vendor Name</td>
+                        <td data-title="Vendor Name" class="col-md-2">
+                            @Html.DropDownListFor(x => x.VendorId, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "---- Select ----", new { @class = "form-control", @id = "ddlVendor" })
+                            @*@Html.DropDownListFor(x => x.VendorId, Model.VendorList, "---- Select -----", new { @class = "form-control", @id = "ddlVendor" })*@
+                            <div class="speech-bubble"> @Html.ValidationMessageFor(model => model.VendorId)</div>
+                            @Html.HiddenFor(model => model.VendorName, new { @id = "hdnVendorName" })
+                        </td>
+
+                        <td class="col-md-1">Till Date</td>
+                        <td data-title="TillDate" class="col-md-2">
+                            @Html.TextBoxFor(model => model.TillDate, new { @class = "form-control", @id = "txtTillDt", @disabled = "disabled" })
+
+                        </td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row" style="padding-bottom:5px;text-align:center;">
+        <div class="form-group">
+            <div class="col-md-12">
+                <input type="submit" class="btn btn-success" value="Show" name="Show" style="margin-top:5px;margin-bottom:5px;width:80px;" id="btnSearch" />
+            </div>
+        </div>
+    </div>
+
+    if (Model.ApprovalList != null)
+    {
+        if (Model.ApprovalList.Count() > 0)
+        {
+            <div id="divdata">
+                <div class="row" style="padding-bottom:5px;">
+                    <div class="form-group page-header">
+                        <div class="col-md-12">
+                            Equipment Lease Rent List For Approval
+                            <span class="input-icon pull-right" style="padding: 2px; margin-top: -5px; margin-right: -20px;">
+                                <input type="text" autocomplete="off" class="form-control" id="txtSearchTable" placeholder="Search Text" />
+                               
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="padding-bottom: 5px;  max-height: 450px; overflow-x: auto; ">
+                    <div id="no-more-tables" style="padding-bottom: 0px; margin-right: 0px; margin-left: 0px;">
+                        <table class="col-md-12 table-bordered table-striped table-condensed cf" id="tblEquipment" style="padding-left: 0px; padding-right: 0px;font-size:9.0pt;">
+                            <thead class="cf">
+                                <tr>
+                                    <th style="font-size:8.0pt;">Sr&nbsp;No.</th>
+                                    <th class="col-md-1" style="font-size:8.0pt;">Payable&nbsp;Code</th>
+                                    <th class="col-md-1" style="font-size:8.0pt;">Payable&nbsp;Date</th>
+                                    <th class="col-md-3" style="font-size:8.0pt;">Pay&nbsp;To</th>
+                                    <th class="col-md-1" style="font-size:8.0pt;">Pay&nbsp;Amount</th>
+                                    <th class="col-md-3" style="font-size:8.0pt;">Remarks</th>
+                                    <th class="col-md-1" style="font-size:8.0pt;">Vehicle&nbsp;Type</th>
+                                    <th class="col-md-1" style="font-size:8.0pt;">Voucher&nbsp;Print</th>
+                                    <th class="col-md-1"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="bodyEquipment">
+                                @for (int i = 0; i < Model.ApprovalList.Count(); i++)
+                                {
+                                    <tr>
+                                        <td data-title="Sr No." class="tdCenter">
+                                            @(i + 1)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].ELRPay_Id)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].ELRPay_Code, new { @id = "ELRPay_Code_" + i })
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].ELRPay_Date)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].payTo)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].payToId)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].PayAmt)
+                                            @Html.HiddenFor(modelItem => Model.ApprovalList[i].Remarks)
+
+                                        </td>
+                                        <td data-title="Payable Code" class="tdCenter">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].ELRPay_Code)
+                                        </td>
+                                        <td data-title="Payable Date" class="tdCenter">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].ELRPay_Date)
+
+                                        </td>
+                                        <td data-title="Pay To">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].payTo)
+                                        </td>
+                                        <td data-title="Pay Amount" class="tdRight">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].PayAmt)
+                                        </td>
+                                        <td data-title="Remarks">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].Remarks)
+                                        </td>
+                                        <td data-title="Vehicle type" class="center">
+                                            @Html.DisplayFor(modelItem => Model.ApprovalList[i].VehicleType)
+                                        </td>
+                                        <td data-title="Voucher Print" class="tdCenter">
+                                            <span id="spnPrint_" @i style="color:blue;cursor:pointer;"> Click </span>
+                                        </td>
+                                        <td data-title="">@Html.CheckBoxFor(modelItem => Model.ApprovalList[i].IsChecked, new { @id = "IsChecked_" + (i + 1), @class = "IsChecked" })</td>
+
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="row" style="padding-bottom:5px;">
+                    <div id="no-4-tables">
+                        <table class="col-md-12 table-bordered table-striped table-condensed cf" style="table-layout:fixed;">
+                            <tbody>
+                                <tr>
+                                    <td class="col-md-2">Transaction Date</td>
+                                    <td data-title="Transaction Date" class="col-md-2">
+                                        @Html.TextBoxFor(model => model.TransactionDate, new { @class = "form-control", @type = "date", @id = "txtTransactionDt" })
+                                        <div class="speech-bubble">
+                                            @*@Html.ValidationMessageFor(model => model.TransactionDate)*@
+                                            <span class="field-validation-error" id="ErrorTransactionDate">Select Transactio Date</span>
+                                        </div>
+                                        @Html.Hidden("hdnPayableDate", "")
+                                    </td>
+                                    <td class="col-md-2">Approval Remark</td>
+                                    <td data-title="Approval Remark" class="col-md-6">
+                                        @Html.TextBoxFor(model => model.ApprovalRemark, new { @class = "form-control", @id = "txtApprovalRemark" ,@autocomplete="off"})
+                                        <div class="speech-bubble"> @Html.ValidationMessageFor(model => model.ApprovalRemark)</div>
+                                    </td>
+                                </tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="row" style="padding-bottom:5px;text-align:center;">
+                    <div class="form-group">
+
+                        <div class="col-md-12">
+                            <input type="submit" class="btn btn-success" value="Approved" name="Approved" style="margin-top:5px;margin-bottom:5px;width:120px;" id="btnApproved" />
+                            <input type="submit" class="btn btn-success" value="Reject" name="Reject" style="margin-top:5px;margin-bottom:5px;width:120px;" id="btnReject" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row" style="padding:0px;text-align:center;">
+                <b style="color:red;font-weight:16px;">Record not found. Bill payble for selected Equipment is already done..</b>
+            </div>
+        }
+    }
+}
+
+<div class="row" id="divToPrint" style="display: none;text-align:center;">
+    <div class="style1" style="text-align: center; table-layout: fixed; padding: 1px 1px 1px 1px;display:inline-block;">
+        <div class="col-lg-5 col-md-6 col-xs-12 col-sm-6" style="text-align: left; padding: 0px 0px 0px 0px; table-layout: fixed; ">
+            <iframe src="http://onwheels.ecalyx.biz/Images/calyxlogo.png" style="width:100%;height:65px;" frameborder="0" scrolling="no"></iframe>&nbsp;
+        </div>
+        <div class="col-lg-7 col-md-6 col-xs-12 col-sm-6" style="text-align: left; padding: 0px 0px 0px 0px;font-size:8.0pt;">
+            @{ Html.RenderAction("_BranchDetails", "Common", new { branchType = "BT00000012" }); }
+        </div>
+        <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12" style="width:97%;">
+            <table class="col-md-12" cellspacing="0" cellpadding="0" style="border: 2px solid white" border="0">
+                <tr style="font-size:12px;">
+                    <td style="width: 25%; border: 2px solid white">&nbsp;</td>
+                    <td style="font-size: 16px; width: 55%; border: 2px solid white; text-align: center; text-decoration: underline; padding: 0px 0px 0px 0px;"><b id="vType"></b></td>
+                    <td style="text-align: center; padding: 0px 0px 0px 0px; border: 2px solid white">&nbsp;</td>
+                </tr>
+            </table>
+            <br />
+        </div>
+        <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12" id="divAdvDetails" style="width:97%;">
+        </div>
+        <div class="col-lg-12 col-md-12 col-xs-12 col-sm-12" style="width:97%;">
+            <div class="col-lg-6 col-md-6 col-xs-6 col-sm-6" style="text-align:left;padding:0px;font-size:6.0pt;font-style:italic" id="PrintedBy"></div>
+            <div class="col-lg-6 col-md-6 col-xs-6 col-sm-6" style="text-align:right;padding:0px;font-size:6.0pt;font-style:italic">Print Date & Time: @(System.DateTime.Now.ToString("dd/MM/yyyy hh:mm tt")) </div>
+        </div>
+
+    </div>
+</div>
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+<style type="text/css">
+    .ui-dialog {
+        z-index: 1000000 !important;
+    }
+</style>
+
+
+<script type="text/javascript">
+
+
+    $(document).ready(function () {
+        $('.rdVendorType').change(function () {
+            $("#hdnVendorName").val('');
+            BindVendor();
+            $("#divdata").hide();
+        })
+
+        BindVendor();
+        function BindVendor() {
+            var vt = $(".rdVendorType:checked").val();
+            if (vt != '') {
+                $("#ddlVendor").empty();
+                $.ajax({
+                    type: 'GET',
+                    async: false,
+                    url: '@Url.Action("Select_Vendor_Of_Vehicle_For_Billing", "Payable")',
+                    data: { vt: vt },
+                    success: function (json, xhr, textStatus) {
+                        $("#ddlVendor").append('<option value="">---- Select ----</option>');
+                        for (var i = 0; i < json.length; i++) {
+                            if (vt == 'C')
+                                $("#ddlVendor").append('<option value="' + json[i].VENDERID + '">' + json[i].VENDORNAME + '</option>');
+                            else
+                                $("#ddlVendor").append('<option value="' + json[i].VENDERID + '">' + json[i].VENDERNAME + '</option>');
+                        }
+                        if (!($('#hdnVendorName').val() == null || $('#hdnVendorName').val() == '')) {
+                            //$("#ddlVendor option:contains(" + $('#hdnVendorName').val() + ")").attr('selected', 'selected');
+                            $('#ddlVendor option').filter(function () {
+                                return ($(this).text() == $('#hdnVendorName').val()); //To select Blue
+                            }).prop('selected', true);
+                        }
+                        else {
+                            $("#ddlVendor").val('');
+                        }
+                    }
+                });
+            }
+        }
+
+        $("#ddlVendor").change(function () {
+            var vendorName = $("select[id*=ddlVendor] option:selected").text();
+            $('#hdnVendorName').val(vendorName);
+        });
+
+        $(".speech-bubble").hide();
+        $("input[type=text]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+        $("select").on('keyup keypress blur change', function (e) {
+            Validate();
+        });
+        $("input[type=date]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+
+        function Validate() {
+            $(".speech-bubble").hide();
+            $(".speech-bubble").each(function () {
+                if ($(this).find('.field-validation-error').text() == "") {
+                    $(this).hide();
+                    return true;
+                }
+                else {
+                    $(this).show();
+                    return false;
+                }
+            });
+        }
+
+        $(".IsChecked").change(function () {
+            var PayableDate = "";
+            $("#tblEquipment [id*=IsChecked_]").each(function () {
+                if ($(this).is(':checked')) {
+                    PayableDate = $(this).closest('tr').find("[data-title='Payable Date']").text().trim();
+                }
+            });
+
+            $("#hdnPayableDate").val(PayableDate);
+        });
+
+        $("#btnSearch").click(function (e) {
+            $('#bodyEquipment').empty(); 
+            $('#divdata').hide();
+        });
+
+        $('#txtTransactionDt').blur(function (e) {
+
+            Datevalidation();
+        });
+
+
+        $("#btnApproved").click(function (e) {
+            var chkCount = 0;
+            $('#tblEquipment input[type=checkbox][id*=IsChecked_]').each(function () {
+                if ($(this).is(':checked')) {
+                    chkCount = chkCount + 1;
+                }
+            });
+
+            if (chkCount == 0) {
+                $("#pageAlert").show().text('Please select atleast one equipment.');
+                $("#pageAlert").scrollTop(10);
+                e.preventDefault();
+
+            }
+            else {
+                $("#pageAlert").hide();
+            }
+            Datevalidation();
+
+        });
+        function Datevalidation() {
+            if ($('#txtTransactionDt').val() != "") {
+                var _pDate = $("#hdnPayableDate").val().split('/');
+                var PayableDate = _pDate[1] + '/' + _pDate[0] + '/' + _pDate[2];
+
+                var TransactionDt = $('#txtTransactionDt').val();
+                var fromDate = new Date(PayableDate);
+                var ToDate = new Date(TransactionDt);
+
+                if (ToDate < fromDate) {
+                    $("#txtTransactionDt").val('');
+
+                    $("#ErrorTransactionDate").text("Transaction date is greater than or equale to Payable date " + $("#hdnPayableDate").val()).show();
+                    e.preventDefault();
+                }
+                else {
+                    $("#ErrorTransactionDate").text("").show();
+                }
+            }
+            else {
+                $("#ErrorTransactionDate").text("Select Transaction Date").show();
+            }
+        }
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+       
+        $("#tblEquipment [id*='spnPrint_']").on("click", function () {
+            var v = $(this).closest('tr').find('[id*=ELRPay_Code_]').val();
+            PrintDoc(v);
+        });
+
+        function PrintDoc(v) {
+            var str = '';
+            $.ajax({
+                async: false,
+                type: "GET",
+                url: '@Url.Action("VoucherForPrint", "Payable")',
+                data: { 'voucherNo': v },
+                contentType: "application/json; charset=utf-8",
+                datatype: "json",
+                success: function (json, textStatus, xhr) {
+                    $('#vType').html("Transport "+json.voucherType);
+                    var tableItem = "<div id='no-more-tables' style='margin-top: 0px;padding: 0px 0px 0px 0px;'>";
+                    tableItem += "<table class='col-lg-12 col-md-12 col-xs-12 col-sm-12' id='tbItem' style='width:100%;margin-top: 0px;padding: 0px 0px 0px 0px;'>";
+                    var tbodyItem = "<tbody>";
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td data-title='Branch' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>Branch</td>";
+                    tbodyItem += "<td data-title='Branch' class='tdCenter' style='text-align:left;'>&nbsp;" + json.Record1[0].Branch_Name + "</td>";
+                    tbodyItem += "<td data-title='Voucher No' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>Voucher No</td>";
+                    tbodyItem += "<td data-title='Voucher No' class='tdCenter' style='text-align:left;'>&nbsp;" + json.Record1[0].VoucherNo + "</td>";
+                    tbodyItem += "</tr>";
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td data-title='Voucher Date' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>Voucher Date</td>";
+                    tbodyItem += "<td data-title='Voucher Date' class='tdCenter' style='text-align:left;'>&nbsp;" + json.Record1[0].VoucherDate + "</td>";
+                    tbodyItem += "<td data-title='Payment' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>" + ((json.voucherType == 'Journal Voucher Payment') ? "Journal" : "Payment") + " No</td>";
+                    tbodyItem += "<td data-title='Payment' class='tdCenter' style='text-align:left;'>&nbsp;" + json.paymentNo + "</td>";
+                    tbodyItem += "</tr>";
+
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td data-title='Paid To' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>Paid To</td>";
+                    tbodyItem += "<td data-title='Paid To' class='tdCenter' style='text-align:left;'>&nbsp;" + json.Record1[0].PayTo + "</td>";
+                    tbodyItem += "<td data-title='Payment In Favour Of' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>Payment In Favour Of</td>";
+                    tbodyItem += "<td data-title='Payment In Favour Of' class='tdCenter' style='text-align:left;'>&nbsp;" + json.Record1[0].InFavourOf + "</td>";
+                    tbodyItem += "</tr>";
+
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td data-title='Narration' class='hidden-xs hidden-sm' style='text-align:left;font-weight:bold;'>Narration</td>";
+                    tbodyItem += "<td data-title='Narration' class='tdCenter' style='text-align:left;' colspan='3'>&nbsp;" + json.Record1[0].Narration + "</td>";
+                    tbodyItem += "</tr>";
+
+                    //if (json.Record1[0].lName != "") {
+                    //    tbodyItem += "<tr>";
+                    //    tbodyItem += "<th data-title='L Name' class='tdCenter' style='text-align:left;' colspan='4'>&nbsp;" + json.Record1[0].lName + "</th>";
+                    //    tbodyItem += "</tr>";
+                    //}
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td style='text-align:center;width: 74%;font-weight:bold;' colspan='3'>Particulars</td>";
+                    tbodyItem += "<td style='text-align:center;width: 25%;font-weight:bold;'> Rs.</td>";
+                    tbodyItem += "</tr>";
+                   // tbodyItem += "<tr><td colspan='4' style='text-align:left;padding: 0px;margin: 0px;'>";
+                    if (json.Record2 != null && json.Record2.length > 0) {
+                        if (json.Record1[0].Category == "B") {
+                            //tbodyItem += "<table width='100%' style='text-align:left;padding: 0px;margin: 0px;border-collapse: collapse; font-family: Verdana; font-size: 9.0pt'>";
+                            tbodyItem += "<tr>";
+                            //tbodyItem += "<td style='text-align:left;width:90%' colspan='2'>&nbsp;" + json.Record1[0].Particular + "</td>";
+                            tbodyItem += "<td style='text-align:left;' colspan='3'>&nbsp;<b>Transport Payment Details</b><br/>";
+                            for (var i = 0; i < json.Record2.length; i++) {
+                                tbodyItem += "&nbsp;"+(i + 1) + ". " + json.Record2[i].DescText + "<br/>";
+                            }
+
+                            tbodyItem += "<div style='text-align:right;'><b>Total :</b></div></td>";
+                            tbodyItem += "<td style='padding-right:10px;text-align:center;font-weight:bold;border-top:1px solid'>&nbsp;" + json.Record1[0].TotalAmount + "</td>";
+                            tbodyItem += "</tr>";
+                           // tbodyItem += "</table>";
+                        }
+                        else {
+                            //tbodyItem += "<table width='100%' style='text-align:left;padding: 0px;margin: 0px;border-collapse: collapse; font-family: Verdana; font-size: 9.0pt'>";
+                            tbodyItem += "<tr>";
+                            //tbodyItem += "<td style='text-align:left;width:90%' colspan='2'>&nbsp;" + json.Record1[0].Particular + "</td>";
+                            tbodyItem += "<td style='text-align:left;' colspan='3'>&nbsp;<b>Transport Payment Details</b><br/>";
+                            for (var i = 0; i < json.Record2.length; i++) {
+                                tbodyItem += "&nbsp;" + (i + 1) + ". " + json.Record2[i].lName + "<br/>";
+                            }
+
+                            tbodyItem += "<div style='text-align:right;'><b>Total :</b></div></td>";
+                            tbodyItem += "<td style='padding-right:10px;text-align:center;font-weight:bold;border-top:1px solid'>&nbsp;" + json.Record1[0].TotalAmount + "</td>";
+                            tbodyItem += "</tr>";
+                            // tbodyItem += "</table>";
+                        }
+                    }
+                   // tbodyItem += "</td></tr>";
+
+                    tbodyItem += "<tr><td colspan='4' >Rs. " + json.Record1[0].AmountInWord + "</td></tr>";
+
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'>Pay Mode</td>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'>Cheque No</td>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'>Cheque Date</td>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'>Bank Name</td>";
+                    tbodyItem += "</tr>";
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td style='text-align:left;'>&nbsp;<input id='Checkbox2' type='checkbox' disabled='disabled'/>&nbsp;Cash <input id='Checkbox1' type='checkbox' disabled='disabled'/>&nbsp;Cheque</td>";
+                    tbodyItem += "<td>&nbsp;</td>";
+                    tbodyItem += "<td>&nbsp;</td>";
+                    tbodyItem += "<td>&nbsp;</td>";
+                    tbodyItem += "</tr>";
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'> Entry By</td>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'> Certify By</td>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'> Approved By</td>";
+                    tbodyItem += "<td style='font-weight:bold;text-align:center;'> Cashier/Accountant</td>";
+                    tbodyItem += "</tr>";
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td align='center'>" + json.Record1[0].EmployeeName + "</td>";
+                    tbodyItem += "<td>&nbsp;</td>";
+                    tbodyItem += "<td>&nbsp;</td>";
+                    tbodyItem += "<td>&nbsp;</td>";
+                    tbodyItem += "</tr>";
+                    tbodyItem += "<tr><td colspan='4' align='left'> <b> Note : Enclosed all Supporting Documents</b></td></tr>";
+                    tbodyItem += "<tr>";
+                    tbodyItem += "<td colspan='3' rowspan='2'> Received Rs. <b>" + json.Record1[0].TotalAmount + "</b> <br /><br /> Dated :</td>";
+                    tbodyItem += "</tr>";
+                    tbodyItem += "<tr><td colspan='4' style='height: 10px; vertical-align: bottom; text-align: center'> Signature</td></tr>";
+
+                    tbodyItem += "</tbody>";
+                    tableItem += tbodyItem + "</table></div>";
+                    str += tableItem;
+                    $('#divAdvDetails').html(str);
+                    $('#PrintedBy').html('Print By: '+json.PrintByCode + ' ' + json.PrintByName);
+
+                }
+            });
+
+            $("#divToPrint").dialog({
+                title: 'Voucher',
+                autoOpen: true,
+                resizable: true,
+                position: { my: "top center", at: "top center" },
+                height: 'auto',
+                width: '80%',
+                show: { effect: 'drop', direction: "up", effect: 'fade', duration: 1000 },
+                hide: { effect: 'fade', duration: 1000 },
+                modal: true,
+                draggable: true,
+                close: function (event, ui) {
+                    $(this).dialog('close');
+                },
+                buttons: {
+                    " Print ": function () {
+                        PrintDiv();
+                    },
+                    "Cancel": function (event, ui) {
+                        $(this).dialog('close');
+                    },
+                }
+            });
+
+        }
+
+        function PrintDiv() {
+            var divToPrint = document.getElementById('divToPrint');
+            var popupWin = window.open('', '_blank', 'width=1100,height=500');
+            popupWin.document.write('<html><head><style type="text/css">body{-webkit-print-color-adjust: exact;} .style1{font-family: Verdana, Sans-serif;font-size:8pt;width: 100%;} .col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5,  .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11,.col-md-12 {position: relative;min-height: 1px;padding-right: 15px;padding-left: 15px;}'
+            + '.col-md-1, .col-md-2, .col-md-3, .col-md-4, .col-md-5, .col-md-6, .col-md-7, .col-md-8, .col-md-9, .col-md-10, .col-md-11, .col-md-12 {float: left;}.col-md-12 {width: 100%;}.col-md-11 {width: 91.66666667%;}.col-md-10 {width: 83.33333333%;}.col-md-9 {width: 75%;}.col-md-8 {width: 66.66666667%;}.col-md-7 {width: 58.33333333%;}.col-md-6 {width: 50%;}.col-md-5 {width: 41.66666667%;}.col-md-4 {width: 33.33333333%;}.col-md-3 {width: 25%;}.col-md-2 {width: 16.66666667%;}.col-md-1 {width: 8.33333333%;}'
+            + 'table {width: 100%;border-collapse: collapse;margin-bottom: 4px; } tr:nth-of-type(odd) {background: #ffffff;} th {background: #e7eef1;color: black;font-weight: bold;font-size:9.0pt;} td, th {padding: 2px;border:1px solid black;text-align: center; } .th {background: #c4cfd3;color: black;font-weight: bold;text-align: left;padding-left: 10px;} .td1 {text-align: right;padding-right: 1px;} td {text-align: left;font-size:8.0pt;} .tdCenter{text-align: center;}'
+            + ' .row1 {margin-right: -45px;}'
+            + '.hidden-lg, .hidden-md{display: none !important;}'
+            + '</style>'
+            + '</head><body onload="window.print()">'
+
+            + divToPrint.innerHTML + '</html>');
+            popupWin.document.close();
+            setTimeout(function () {
+                popupWin.close();
+            }, 500);
+        }
+
+
+        $("#txtSearchTable").keyup(function () {
+
+            //split the current value of searchInput
+            var data = this.value.toUpperCase().split(" ");
+            //create a jquery object of the rows
+            var jo = $("#bodyEquipment").find("tr");
+            if (this.value == "") {
+                jo.show();
+                return;
+            }
+            //hide all the rows
+            jo.hide();
+            jo.filter(function (i, v) {
+                //var $t = $(this).children(":eq(1)");
+                var $t = $(this);
+                for (var d = 0; d < data.length; ++d) {
+                    if ($t.is(":contains('" + data[d] + "')")) {
+                        console.log(data[d]);
+                        return true;
+                    }
+                }
+                return false;
+            }).show();
+
+        });
+
+
+
+    });
+</script>
+
+
+
+
+_______________________________________________________________________
+
