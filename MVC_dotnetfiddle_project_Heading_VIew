@@ -1,0 +1,95 @@
+____________________________________________________________________________MODEL_______________________________________________________________
+
+ using System;
+using System.ComponentModel.DataAnnotations;
+
+namespace HelloWorldMvcApp
+{
+	public class SampleViewModel
+	{
+		
+	}
+}
+
+
+___________________________________________________________________________VIEW____________________________________________________________________
+
+
+@model HelloWorldMvcApp.SampleViewModel
+@{
+	Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+	<style type="text/css">
+
+		   #BTN_SHOW{
+		        Background-color:green;
+	         	width:150px;
+		
+			}
+		
+		    #head_ctname_change{
+		    border:1px solid green;
+		    width:100%;
+		    background-color:yellow;
+		    text-align:center;
+		    }
+		
+		    .td_style{
+		       font-weight:bold;
+	           text-align:center;
+		     }
+		   
+		   .inpt1{
+		     align:right;
+		    }
+		    
+		    .inpt2{
+		     align:left;
+		     }
+
+		</style>
+	</head>
+	
+	<body>
+       <table style="height:60px;width:100%;">
+			<tr>
+				<td colspan="5" class="td_style" id="head_ctname_change">Job Customer Name Change</td>
+			</tr>	
+			<tr>
+				<td  class="td_style">Job Code </td>
+				<td  class="inpt1">:<input></input></td>
+				<td  class="td_style">Action</td>
+				<td  class="inpt2">:<input></input></td>
+				<td  class="td_style"><button type="button" id="BTN_SHOW">Show</button></td>
+			</tr>
+	   </table>		
+	</body>
+</html>
+
+
+____________________________________________________________________CONTROLLER______________________________________________________________
+
+
+using System;
+using System.Web.Mvc;
+using System.Collections.Generic;
+
+namespace HelloWorldMvcApp
+{
+	public class HomeController : Controller
+	{
+		[HttpGet]
+		public ActionResult Index()
+		{
+			return View(new SampleViewModel());
+		}		
+	}
+}
