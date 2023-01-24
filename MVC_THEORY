@@ -1,0 +1,20 @@
+                       ROUTERS   -    A router is a device that connects two or more
+                                      packet-switched networks or subnetworks. It serves
+                                      two primary functions: managing traffic between these networks 
+                                      by forwarding data packets to their intended IP addresses, 
+                                      and allowing multiple devices to use the same Internet connection.
+                                      
+                                      
+                       FILTERS   -    Filter is a custom class where you can write custom logic
+                                      to execute before or after an action method executes.
+                                      
+                                       Filters can be applied to an action method or controller in a declarative or programmatic way.
+                                       Declarative means by applying a filter attribute to an action method or controller class and programmatic
+                                       means by implementing a corresponding interface. 
+                                      
+                                            * Authorization filters 
+                                            * Action filters 
+                                            * Result filters 
+                                            * Exception filters 
+                                            
+                                            
