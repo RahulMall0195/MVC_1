@@ -42,3 +42,37 @@
                   
                      Models    -       An MVC model contains all of your application logic that is not contained in a view or a controller.
                                        The model should contain all of your application business logic, validation logic, and database access logic.
+                                       
+                                       
+                     GET       -       The get method returns the value of the variable name .
+                     
+                     
+                     SET       -       The set method assigns a value to the name variable.
+                     
+                     
+               ActionResult    -       MVC framework includes various Result classes, which can be returned from an action method.
+                                       The result classes represent different types of responses, such as HTML, file, string, JSON,
+                                       javascript, etc. The following table lists all the result classes available in ASP.NET MVC.    
+                                       
+                                       
+                                                Result Class   	Description
+                                                ViewResult 	Represents HTML and markup.
+                                                EmptyResult 	Represents No response.
+                                                ContentResult 	Represents string literal.
+                                                FileContentResult/ FilePathResult/ FileStreamResult 	Represents the content of a file.
+                                                JavaScriptResult 	Represent a JavaScript script.
+                                                JsonResult 	Represent JSON that can be used in AJAX.
+                                                RedirectResult 	Represents a redirection to a new URL.
+                                                RedirectToRouteResult 	Represent another action of same or other controller.
+                                                PartialViewResult 	Returns HTML from Partial view.
+                                                HttpUnauthorizedResult 	Returns HTTP 403 status. 
+                                                
+                                                
+                                        The ActionResult class is a base class of all the above result classes, 
+                                        so it can be the return type of action method
+                                        that returns any result listed above. However,
+                                        you can specify the appropriate result class as a return type of action method.                
+                                                
+                                       
+                                       
+                                       
