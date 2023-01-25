@@ -18,12 +18,27 @@
                                             * Exception filters 
                                             
                      
-                  ActionResult -        An action result is what a controller action returns in response to a browser request. The ASP.NET MVC 
+                  ActionResult  -       An action result is what a controller action returns in response to a browser request. The ASP.NET MVC 
                                         framework supports several types of action results including: ViewResult - Represents HTML and markup. EmptyResult -
                                         Represents no result. RedirectResult - Represents a redirection to a new URL.
+                                        
+                                         All the public methods of the Controller class are called Action methods.
+                                         They are like any other normal methods with the following restrictions:
+
+                                                  1.   Action method must be public. It cannot be private or protected
+                                                  2.   Action method cannot be overloaded
+                                                  3.   Action method cannot be a static method.
+
                                             
                                             
                       
-                       ViewBag  -      ViewBag is a way to pass data from the controller to the view. It is a type object and is a dynamic property
-                                       under the controller base class. Compared to ViewData, it works similarly but
-                                       is known to be a bit slower and was introduced in ASP.NET MVC 3.0
+                       ViewBag  -       ViewBag is a way to pass data from the controller to the view. It is a type object and is a dynamic property
+                                        under the controller base class. Compared to ViewData, it works similarly but
+                                        is known to be a bit slower and was introduced in ASP.NET MVC 3.0
+
+
+                  Controllers   -       controllers are used to control the way a visitor interacts with an ASP.NET MVC website.
+                  
+                  
+                     Models    -       An MVC model contains all of your application logic that is not contained in a view or a controller.
+                                       The model should contain all of your application business logic, validation logic, and database access logic.
