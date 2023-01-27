@@ -1,0 +1,66 @@
+Page Name ---     HomeController.cs
+
+using System;
+using System.Collection.Generics;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace Razorviewengine.Controllers{
+public class HomeController : Controller
+{
+//Razor View Engin
+
+public actionResult Index()
+{
+return View();
+}
+}
+}
+
+
+Page Name ---   Index.cshtml
+
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport content=width=device-width"/>
+<title>Index</title>
+</head>
+<body>
+<div>
+@DateTime.Now
+</div> 
+
+@{
+  int a=10;
+  int b=20;
+  }
+  <p>
+  The SUm of @x and @y is @z
+  </p>
+}
+
+@if(x%2==0){
+<p>The number is even</p>
+}
+else{
+<p>The given number is odd</p>
+}
+
+<ul>
+@for(int i=1;i<=x;i++){
+<li>@i</li>
+}
+</ul>
+
+</body>
+
+
+</html>
