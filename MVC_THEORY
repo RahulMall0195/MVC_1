@@ -108,3 +108,9 @@
                                         the invoker will call the HandleUnknownAction method on the Controller, 
                                         supplying the name of the missing action. If more than one action method meeting these criteria is found,
                                         an InvalidOperationException is thrown.                        
+                                        
+                                        
+      Razor-View-Engine     -          Razor is a markup syntax that lets you embed server-based code into web pages using C# and VB.Net. 
+                                       It is not a programming language. It is a server side markup language.
+                                       Razor has no ties to ASP.NET MVC because Razor is a general-purpose templating engine. 
+                                       You can use it anywhere to generate output like HTML.                                  
