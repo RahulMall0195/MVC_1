@@ -74,5 +74,12 @@
                                         you can specify the appropriate result class as a return type of action method.                
                                                 
                                        
+                  
+                  ViewModel    -        In ASP.NET MVC, ViewModel is a class that contains the fields which are represented in the strongly-typed view.
+                                        It is used to pass data from controller to strongly-typed view.
+                                        
+                                        
+         strongly-typed view.   -      The Strongly typed views are used for rendering specific types of model objects,
+                                       instead of using the general ViewData structure.
                                        
                                        
