@@ -82,4 +82,29 @@
          strongly-typed view.   -      The Strongly typed views are used for rendering specific types of model objects,
                                        instead of using the general ViewData structure.
                                        
-                                       
+                                      
+                                      
+          HttpGet and HttpPost -        HttpGet and HttpPost are both the methods of posting client data or form data to the server.
+                                        HTTP is a HyperText Transfer Protocol that is designed to send and receive the data between
+                                        client and server using web pages.
+
+                                        HTTPGET and HTTPPOST attributes encode request parameters as key and value pairs in the HTTP request.
+                                        The HttpGet protocol and the HttpPost protocol provide backward compatibility.
+                                        Find the below example. You may want two versions of the Search method,
+                                        one that renders the Search form and the other that handles the request when that form is posted.
+
+                                        Whenever the POST request for /Values/Search is received, 
+                                        the action invoker creates a list of all methods of the Controller that match the Search action name.
+                                        In this case, you would end up with a list of two methods. Immediately,
+                                        the invoker looks at all of the ActionSelectorAttribute instances applied to each method and calls the IsValidForRequest method on each.
+                                        If each attribute returns true, then the method is considered valid for the current action.
+
+                                        Let us consider one case; when you ask the first method if it can handle a POST request,
+                                        it will respond with false because it only handles GET requests.
+                                        The second method responds with true because it can handle the POST request, 
+                                        and it is the one selected to handle the action for post request.
+
+                                        While doing this action, no method is found that meets these criteria, 
+                                        the invoker will call the HandleUnknownAction method on the Controller, 
+                                        supplying the name of the missing action. If more than one action method meeting these criteria is found,
+                                        an InvalidOperationException is thrown.                        
