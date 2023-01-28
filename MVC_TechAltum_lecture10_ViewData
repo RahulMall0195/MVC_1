@@ -7,7 +7,7 @@ using System.Web.Mvc;
 namespace viewdata.Controllers{
 
 //ViewDate
-//Controller to view data sharing :-ViewData,ViewBag and Model
+//Controller to view data sharing :-ViewData,ViewBag,tempdata and Model
 //ViewDate:- controller to its corresponding view data sharing
 //ViewDataDictionary
 //key-value format
