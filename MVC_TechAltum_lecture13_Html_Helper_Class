@@ -1,1 +1,80 @@
 
+_______________________________________HomeController_____________________________
+
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace WebApplication.Controllers
+{
+public class HomeControllers : Controller
+{
+public ActionResult Index()
+{
+return View();
+}
+public ActionResult showname(string n1 , string n2)
+{
+Response.Write(t1+" "+t2)
+return View();
+}
+}
+}
+
+
+______________________________________Index.cshtml________________________________
+
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width"/>
+<title>Index</title>
+</head>
+<body>
+<div>
+  @Html.BeginForm(Html.BeginForm("Actionname","controller name",FormMethod.Get))
+   {
+    @Html.Label("Enter your First Name");
+    @Html.TextBox("t1",null,new{ placeholder="Enter your first name"});
+    <br/>
+    @Html.Label("Enter your last name");
+    @Html.TextBox("b1","show full name",new{Type="submit"});
+    
+    @Html.TextArea("t3")
+    <br/>
+    @Html.Password("t4")
+    <br/>
+    @Html.TextBox("f1","upload your file ",new{Type = "filet"})
+  }
+</div>
+</body>
+<html>
+
+
+
+_______________________________________showname.cshtml________________________________
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width"/>
+<title>show</title>
+</head>
+<body>
+<div>
+This is my show page
+</div>
+</body>
+</html>
