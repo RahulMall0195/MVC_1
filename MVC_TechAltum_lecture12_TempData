@@ -1,0 +1,67 @@
+_______________________________________HomeController_____________________________
+
+
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace WebApplication.Controllers{
+public class HomeControllers : Controller
+{
+public ActionResult Index(){
+TempData["K1"] = "Mr mall";
+TempData.Keep("k1");
+return View();
+}
+public ActionResult show(){
+return View();
+}
+}
+}
+
+
+______________________________________Index.cshtml___________________________
+
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width"/>
+<title>Index</title>
+</head>
+<body>
+<div>
+   <p>My name is @TempData["k1"]</p>
+   <form action="home/show">
+   <input type="submit" value="show">
+   </form>
+</div>
+</body>
+<html>
+
+
+
+_______________________________________show.cshtml________________________________
+
+@{
+Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+<meta name="viewport" content="width=device-width"/>
+<title>show</title>
+</head>
+<body>
+<div>
+This is my show page
+</div>
+</body>
+</html>
