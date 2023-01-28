@@ -114,3 +114,10 @@
                                        It is not a programming language. It is a server side markup language.
                                        Razor has no ties to ASP.NET MVC because Razor is a general-purpose templating engine. 
                                        You can use it anywhere to generate output like HTML.                                  
+
+
+
+        AntiForgeryToken()  -          To help prevent CSRF attacks, ASP.NET MVC uses anti-forgery tokens, also called request verification tokens.
+                                       The client requests an HTML page that contains a form. The server includes two tokens in the response.
+                                       One token is sent as a cookie. The other is placed in a hidden form field.
+                              
