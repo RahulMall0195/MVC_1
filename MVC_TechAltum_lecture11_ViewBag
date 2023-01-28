@@ -1,0 +1,67 @@
+_____________________________________HomeController.cs____________________
+
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace viewdata.Controllers{
+
+//ViewDate
+//Controller to view data sharing :-ViewData,ViewBag,tempdata and Model
+//ViewDate:- controller to its corresponding view data sharing
+//ViewDataDictionary
+//key-value format
+//in the form object 
+//typr casting at the time of data retrieval
+
+             
+           //ViewBag
+           //COntroller to its correspomding view data sharing.
+           //work using dynamic properties 
+           //wrapup around viewdata
+           //No need for type casting 
+           
+
+public class HomeController : Controller 
+{
+public ActionResult Index(){
+List<string>con = new List<string>(){"India","China","USA","UK"};
+ViewData["c1"]=con;
+return View();
+}
+}
+}
+
+
+______________________________________Index.cshtml______________________
+
+@{
+Layout =null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width"/>
+<title>Index</title>
+</head>
+<body>
+ <div>
+ <p>Countries Name are using ViewData:-</p>
+ <ul>
+ @foreach(string c in (List<string>)ViewData["c1"])
+ {
+ <li>@c</li>
+ }
+ </ul>
+ 
+ <p>Countries Names are using ViewBag :-</p>
+ <ul>
+ @foreach(string p in ViewBag.c2){
+ <li>@p</li>
+ }
+ </ul>
+ 
+</div>
+</body>
+</html>
