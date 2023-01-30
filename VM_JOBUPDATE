@@ -1,0 +1,602 @@
+_____________________________________________________________VM_Job_Update.cs____________________________________________________________
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using MVCConsignment.Models;
+
+namespace MVCConsignment.ViewModel
+{
+    public class VM_Job_Update
+    {
+        [Required(ErrorMessage = "Please Fill JobCode .")]
+        public string JobCode { get; set; }
+
+
+        [Required(ErrorMessage = "Select Action")]
+        public string Action { get; set; }
+        public SelectList ActionList { get; set; }
+
+
+        public string OldCustomerName { get; set; }
+
+         
+        [Display(Name = "Select Customer Name")]
+        public string CustomerName { get; set; }
+
+        
+        public SelectList Customer_list { get; set; }
+
+        public string OldMoveFor { get; set; }
+         
+        [Required(ErrorMessage = "Select Move For")]
+        public string MoveFor { get; set; }
+
+        public SelectList MoveFor_list { get; set; }
+
+
+        public VM_Job_Update()
+        {
+            ActionList = new SelectList(
+                                      new List<SelectListItem>
+                                        {
+                                            new SelectListItem { Text = "Customer Name", Value = "Customer Name"},
+                                            new SelectListItem { Text = "Move For", Value = "Move For"}, 
+                                            new SelectListItem { Text = "Job Cancel", Value = "Job Cancel"},
+                                            new SelectListItem { Text = "Freight Rate", Value = "Freight Rate"}, 
+                                            new SelectListItem { Text = "Trailer Rent", Value = "Trailer Rent"}, 
+                                             
+                                        }, "Value", "Text");
+
+            MoveFor_list = new SelectList(
+                                      new List<SelectListItem>
+                                        {
+                                            new SelectListItem { Text = "Calyx", Value = "C"},
+                                            new SelectListItem { Text = "Other", Value = "O"},  
+           }, "Value", "Text");
+        }
+
+    }     
+}
+
+
+_____________________________________________________________Job_Update.cshtml____________________________________________________________
+
+@model MVCConsignment.ViewModel.VM_Job_Update
+@using MVCConsignment.AlertMessage
+
+@{
+    ViewBag.Title = "Job Order Container Update";
+    Layout = "~/Views/Shared/_MainDashboard.cshtml";
+}
+<link href="~/Content/PagedList.css" rel="stylesheet" />
+<link href="~/Content/ResponsiveTable.css" rel="stylesheet" />
+<script src="~/Scripts/Custom/num2Word.js"></script>
+<link href="~/Content/Page.css" rel="stylesheet" />
+<script src="~/Scripts/Custom/custom_Validate.js"></script>
+
+@using (Html.BeginForm(FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    <div class="row" style="padding-bottom:1px;">
+        @{ Html.RenderPartial("_Alerts");}
+    </div>
+    <div class="row" style="padding-bottom:1px; text-align:center">
+        <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <b id="alertMessage"></b>
+        </div>
+    </div>
+
+
+    <div class="row" style="padding-bottom:5px;text-align:center">
+        <div id="no-4-tables">
+            <table class="col-md-12 table-bordered table-striped table-condensed cf" style="padding:5px;">
+                <tbody>
+                    <tr>
+                      <td data-title="Job Code">Job Code</td>
+                        <td data-title="Job Code">
+                              @Html.TextBoxFor(model => model.JobCode, new { @class = "form-control", @id = "txtJobCode", autocomplete = "off", @maxlength = "30" })
+                            <div class="speech-bubble">
+                              @Html.ValidationMessageFor(model => model.JobCode,"", new { @id = "ErrortxtJobCode" })
+                            </div>
+                        </td>
+                        <td data-title="Action">Action</td>
+                        <td data-title="Action">
+                            @Html.DropDownListFor(model => model.Action, Model.ActionList, "Select Action", new { @class = "form-control", @id = "ddlActionList" })
+                            <div class="speech-bubble">
+                                @Html.ValidationMessageFor(model => model.Action, "", new { @id = "ErrorddlActionList" })
+                            </div>
+                        </td>
+                     </tr>
+                </tbody>
+            </table>
+
+
+            <div class="row" style="padding-bottom:5px; text-align:center;">
+                <div class="form-group">
+                    <div class="col-md-12">
+                        <input type="submit" class="btn btn-success" value="Show" style="margin-top:10px;margin-left:10px;width:80px;" id="btnSearch" />
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="row pad" style="margin-left: 0px; margin-right: 0px;">
+        <div class=" form-group">
+            <div class="col-md-12  page-header" style="margin:0px;">
+                Job Details
+            </div>
+        </div>
+    </div>
+
+
+    <div id="divCust" style="display:block;">
+        <div id="no-4-tables">
+            <table class="col-md-12 table-bordered table-striped table-condensed cf" style="padding:5px;">
+                <tbody>
+                    <tr>
+
+                        <td data-title="Customer Name">Customer Name</td>
+                        <td data-title="Customer Name">
+                            @Model.OldCustomerName
+                        </td>
+                        <td data-title="New Customer Name">New Customer Name</td>
+                        <td data-title="New Customer Name">
+                            @Html.DropDownListFor(model => model.CustomerName, Model.Customer_list, "Select Customer Name", new { @class = "form-control", @id = "ddlCustomerName" })
+                            <div class="speech-bubble">
+                                @Html.ValidationMessageFor(model => model.CustomerName,"", new { @id = "ErrorddlCustomerName" })
+                            </div>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div id="divMoveFor" style="display:block;">
+        <div id="no-4-tables">
+            <table class="col-md-12 table-bordered table-striped table-condensed cf" style="padding:5px;">
+                <tbody>
+                    <tr>
+
+                        <td data-title="Move For">Move For</td>
+                        <td data-title="Move For">
+                            @Model.OldMoveFor
+                        </td>
+                        <td data-title="New Move Type">New Move Type</td>
+                        <td data-title="New Move Type">
+                            @Html.DropDownListFor(model => model.MoveFor, Model.MoveFor_list, "Select Move For", new { @class = "form-control", @id = "ddlMoveFor" })
+                            <div class="speech-bubble">
+                                @Html.ValidationMessageFor(model => model.MoveFor, "", new { @id = "ErrorddlMoveFor" })
+                            </div>
+                        </td>
+
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+     
+
+}
+
+<script type="text/javascript">
+    $(document).ready(function () {
+         
+        // $(".speech-bubble").hide();
+        $("input[type=text]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+        $("select").on('keyup keypress blur change', function (e) {
+            Validate();
+        });
+        $("input[type=date]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+        $("input[type=radio]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+
+        function Validate() {
+            $(".speech-bubble").hide();
+            $(".speech-bubble").each(function () {
+                if ($(this).find('.field-validation-error').text() == "") {
+                    $(this).hide();
+                    return true;
+                }
+                else {
+                    $(this).show();
+                    return false;
+                }
+            });
+        }
+
+
+
+        $('#btnShow').click(function () {
+          
+        });
+
+    });
+
+</script>
+
+
+
+_____________________________________________________________ErrorController.cs_______________________________________________________
+
+
+using MVCConsignment.App_Code;
+using MVCConsignment.App_Code.FAMS;
+using MVCConsignment.Models;
+using MVCConsignment.UnitOfWorks;
+using MVCConsignment.ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Web.Mvc;
+
+namespace MVCConsignment.Controllers
+{
+    public class ErrorController : BaseController
+    {
+        CALYX_LOGISEntities db = null;
+        IUnitOfWork UOW = null;
+        DAL_ERROR err_DAL = new DAL_ERROR();
+        string LOGIN_BRANCH = "";
+        public ErrorController(DbContext db1, IUnitOfWork iow)
+        {
+            UOW = iow;
+            db = (CALYX_LOGISEntities)db1;
+
+            if (System.Web.HttpContext.Current.Session["UserCredentials"] != null)
+            {
+                SP_LogIn_Result LogIn = (SP_LogIn_Result)System.Web.HttpContext.Current.Session["UserCredentials"];
+                if (LogIn != null)
+                {
+                    LOGIN_BRANCH = LogIn.Branch_Code;
+                }
+            }
+        }
+
+        #region Advance Receipt Tds Update
+
+        public ActionResult ReceiptTdsUpdate()
+        {
+            ViewBag.Header = "Receipt Tds Update";
+            VM_ReceiptTdsUpdate rtu = new VM_ReceiptTdsUpdate();
+            if (TempData["PartyId"] != null)
+            {
+                rtu.PartyId = Convert.ToInt32(TempData["PartyId"]);
+                rtu.ReceiptFor = Convert.ToString(TempData["ReceiptFor"]);
+                rtu.FromDate = Convert.ToDateTime(TempData["FromDate"]);
+                rtu.ToDate = Convert.ToDateTime(TempData["ToDate"]);
+                Receipt_For_Tds_Update(rtu);
+                ModelState.Clear();
+            }
+            return View(rtu);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult ReceiptTdsUpdate(VM_ReceiptTdsUpdate rtu)
+        {
+            ViewBag.Header = "Receipt Tds Update";
+
+            if (rtu.Action == "Submit")
+            {
+                decimal result = 0;
+                foreach (var item in rtu.Result)
+                {
+                    if (item.IsChecked)
+                    {
+                        result = err_DAL.UPDATE_RECEIPT_TDS(rtu);
+                    }
+                }
+
+                if (result > 0)
+                {
+                    Success(string.Format("<b>Updation is done successfully.</b>"), true);
+                }
+                else if ((rtu.ErrMsg??"").Trim() != "")
+                {
+                    Danger(string.Format("<b>" + rtu.ErrMsg + "</b>"), true);
+                }
+                else
+                {
+                    Danger(string.Format("<b>Updation is not done.</b>"), true);
+                }
+
+                TempData["PartyId"] = rtu.PartyId;
+                TempData.Keep("PartyId");
+
+                TempData["ReceiptFor"] = rtu.ReceiptFor;
+                TempData.Keep("ReceiptFor");
+
+                TempData["FromDate"] = rtu.FromDate;
+                TempData.Keep("FromDate");
+
+                TempData["ToDate"] = rtu.ToDate;
+                TempData.Keep("ToDate");
+
+                return RedirectToAction("ReceiptTdsUpdate");
+            }
+
+            Receipt_For_Tds_Update(rtu);
+            ModelState.Clear();
+            return View(rtu);
+        }
+
+        private void Receipt_For_Tds_Update(VM_ReceiptTdsUpdate rtu)
+        {
+            DataTable dt = err_DAL.Fill_Receipt_For_Tds_Update(LOGIN_BRANCH, rtu.PartyId, rtu.FromDate.Value.ToString("dd/MM/yyyy"), rtu.ToDate.Value.ToString("dd/MM/yyyy"));
+            List<VM_Receipt_For_Tds_Update> dtl = new List<VM_Receipt_For_Tds_Update>();
+            if (dt.Rows.Count > 0)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    dtl.Add(new VM_Receipt_For_Tds_Update
+                    {
+                        SrNO = Convert.ToInt32(row["SrNO"] == DBNull.Value ? "0" : row["SrNO"]),
+                        ADV_ID = Convert.ToDecimal(row["ADV_ID"] == DBNull.Value ? "0" : row["ADV_ID"]),
+                        RECEIPT_DATE = Convert.ToString(row["RECEIPT_DATE"] == DBNull.Value ? "" : row["RECEIPT_DATE"]),
+                        PAY_MODE = Convert.ToString(row["PAY_MODE"] == DBNull.Value ? "" : row["PAY_MODE"]),
+                        PAY_DETAILS = Convert.ToString(row["PAY_DETAILS"] == DBNull.Value ? "" : row["PAY_DETAILS"]),
+                        CHQ_RTGS_DD_NO = Convert.ToString(row["CHQ_RTGS_DD_NO"] == DBNull.Value ? "" : row["CHQ_RTGS_DD_NO"]),
+                        CHQ_RTGS_DD_DATE = Convert.ToString(row["CHQ_RTGS_DD_DATE"] == DBNull.Value ? "" : row["CHQ_RTGS_DD_DATE"]),
+                        BANKNAME = Convert.ToString(row["BANKNAME"] == DBNull.Value ? "" : row["BANKNAME"]),
+                        AMOUNT = Convert.ToDecimal(row["AMOUNT"] == DBNull.Value ? "0" : row["AMOUNT"]),
+                        TDS_AMOUNT = Convert.ToDecimal(row["TDS_AMOUNT"] == DBNull.Value ? "0" : row["TDS_AMOUNT"]),
+                        TOTAL_AMOUNT = Convert.ToDecimal(row["TOTAL_AMOUNT"] == DBNull.Value ? "0" : row["TOTAL_AMOUNT"]),
+                        ADV_DTL_ID = Convert.ToDecimal(row["ADV_DTL_ID"] == DBNull.Value ? "0" : row["ADV_DTL_ID"]),
+                    });
+                }
+            }
+            rtu.Result = dtl;
+        }
+
+        #endregion
+
+        #region Job Order Container Update
+
+        public ActionResult JobOrderContainerUpdate()
+        {
+            ViewBag.Header = "Job Order Container Update";
+            VM_JobOrderContainerUpdate jcu = new VM_JobOrderContainerUpdate();
+            if (TempData["Job_Order_No"] != null)
+            {
+                jcu.Search_Job_No = Convert.ToString(TempData["Job_Order_No"]);
+                Jobs_For_Container_Update(jcu);
+                ModelState.Clear();
+            }
+            return View(jcu);
+        }
+
+        private void Jobs_For_Container_Update(VM_JobOrderContainerUpdate jcu)
+        {
+            DataTable dt = err_DAL.SELECT_JOB_ORDER_DETAILS_FOR_CONT_UPDATE(LOGIN_BRANCH,jcu.Search_Job_No);
+            if (dt.Rows.Count > 0)
+            {
+                foreach (DataRow row in dt.Rows)
+                {
+                    jcu.Job_Id = Convert.ToDecimal(row["JOB_ID"] == DBNull.Value ? "0" : row["JOB_ID"]);
+                    jcu.BookingBranch = Convert.ToString(row["BOOKING_BRANCH"] == DBNull.Value ? "" : row["BOOKING_BRANCH"]);
+                    jcu.Curr_Cont_No = Convert.ToString(row["CONT_NO_1"] == DBNull.Value ? "" : row["CONT_NO_1"]);
+                    jcu.ErrMsg = Convert.ToString(row["ERROR_MSG"] == DBNull.Value ? "" : row["ERROR_MSG"]);
+                    jcu.Job_No = Convert.ToString(row["job_code"] == DBNull.Value ? "" : row["job_code"]);
+                    jcu.Job_Date = Convert.ToString(row["JOB_DATE"] == DBNull.Value ? "" : row["JOB_DATE"]);
+                }
+            }
+
+            if ((jcu.ErrMsg ?? "").Trim() != "")
+            {
+                jcu.Job_Id = 0;
+                Danger(string.Format("<b>" + jcu.ErrMsg + "</b>"), true);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult JobOrderContainerUpdate(VM_JobOrderContainerUpdate jcu)
+        {
+            ViewBag.Header = "Job Order Container Update";
+
+            if (jcu.Action == "Submit")
+            {
+                decimal result = 0;
+
+                result = err_DAL.UPDATE_JOB_ORDER_CONT_NO(jcu);
+
+                if (result > 0)
+                {
+                    Success(string.Format("<b>Updation is done successfully.</b>"), true);
+                }
+                else if ((jcu.ErrMsg ?? "").Trim() != "")
+                {
+                    Danger(string.Format("<b>" + jcu.ErrMsg + "</b>"), true);
+                }
+                else
+                {
+                    Danger(string.Format("<b>Updation is not done.</b>"), true);
+                }
+
+                TempData["Job_Order_No"] = jcu.Search_Job_No;
+                TempData.Keep("Job_Order_No");
+
+                return RedirectToAction("JobOrderContainerUpdate");
+            }
+
+            Jobs_For_Container_Update(jcu);
+            ModelState.Clear();
+            return View(jcu);
+        }
+
+        #endregion
+        
+        #region Bill Transport Charge Update
+        public ActionResult BillTransportChargeUpdate()
+        {
+            ViewBag.Header = "Bill Transport Charge Update";
+            VM_BillTransportChargeUpdate bcu = new VM_BillTransportChargeUpdate();
+            if (TempData["Bill_No"] != null)
+            {
+                bcu.Search_Bill_No = Convert.ToString(TempData["Bill_No"]);
+                Bill_For_Transport_Charge_Update(bcu);
+                ModelState.Clear();
+            }
+            return View(bcu);
+        }
+
+        private void Bill_For_Transport_Charge_Update(VM_BillTransportChargeUpdate bcu)
+        {
+            DataSet ds = err_DAL.SELECT_BILL_DETAILS_FOR_TRANSPORT_CHARGE_UPDATE(LOGIN_BRANCH, bcu.Search_Bill_No);
+            if (ds.Tables.Count > 0)
+            {
+                foreach (DataRow row in ds.Tables[0].Rows)
+                {
+                    bcu.Bill_Id = Convert.ToDecimal(row["BILL_ID"] == DBNull.Value ? "0" : row["BILL_ID"]);
+                    bcu.LoginBranch = Convert.ToString(row["LOGIN_BRANCH"] == DBNull.Value ? "" : row["LOGIN_BRANCH"]);
+                    bcu.Bill_No = Convert.ToString(row["BILL_NO"] == DBNull.Value ? "" : row["BILL_NO"]);
+                    bcu.Bill_Date = Convert.ToString(row["BILL_DATE"] == DBNull.Value ? "" : row["BILL_DATE"]);
+                    bcu.Prev_AMOUNT = Convert.ToDecimal(row["AMOUNT"] == DBNull.Value ? "0" : row["AMOUNT"]);
+                    bcu.Prev_BILL_AMT = Convert.ToDecimal(row["BILL_AMT"] == DBNull.Value ? "0" : row["BILL_AMT"]);
+                    bcu.Prev_Amt_In_Words = Convert.ToString(row["AMOUNT_INWORDS"] == DBNull.Value ? "" : row["AMOUNT_INWORDS"]);
+                    bcu.ErrMsg = Convert.ToString(row["ERROR_MSG"] == DBNull.Value ? "" : row["ERROR_MSG"]);
+                }
+
+                if (ds.Tables.Count > 1)
+                {
+                    List<VM_Bill_Dtls> dtl = new List<VM_Bill_Dtls>();
+                    int i = 0;
+                    foreach (DataRow row in ds.Tables[1].Rows)
+                    {
+                        dtl.Add(new VM_Bill_Dtls
+                        {
+                            SrNO = ++i,
+                            BILL_ID = Convert.ToDecimal(row["BILL_ID"] == DBNull.Value ? "0" : row["BILL_ID"]),
+                            BILL_Det_ID = Convert.ToDecimal(row["BILL_Det_ID"] == DBNull.Value ? "0" : row["BILL_Det_ID"]),
+                            CN_CODE = Convert.ToString(row["CN_CODE"] == DBNull.Value ? "" : row["CN_CODE"]),
+                            AMOUNT = Convert.ToDecimal(row["AMOUNT"] == DBNull.Value ? "0" : row["AMOUNT"]),
+                            HALT_AMT = Convert.ToDecimal(row["HALT_AMT"] == DBNull.Value ? "0" : row["HALT_AMT"]),
+                            OTHER_AMT = Convert.ToDecimal(row["OTHER_AMT"] == DBNull.Value ? "0" : row["OTHER_AMT"]),
+                            DISCOUNT_AMT = Convert.ToDecimal(row["DISCOUNT_AMT"] == DBNull.Value ? "0" : row["DISCOUNT_AMT"]),
+                            STATISTICAL_CHARGES = Convert.ToDecimal(row["STATISTICAL_CHARGES"] == DBNull.Value ? "0" : row["STATISTICAL_CHARGES"]),
+                            PREV_AMOUNT = Convert.ToDecimal(row["AMOUNT"] == DBNull.Value ? "0" : row["AMOUNT"]),
+                            PREV_HALT_AMT = Convert.ToDecimal(row["HALT_AMT"] == DBNull.Value ? "0" : row["HALT_AMT"]),
+                            PREV_OTHER_AMT = Convert.ToDecimal(row["OTHER_AMT"] == DBNull.Value ? "0" : row["OTHER_AMT"]),
+                            PREV_DISCOUNT_AMT = Convert.ToDecimal(row["DISCOUNT_AMT"] == DBNull.Value ? "0" : row["DISCOUNT_AMT"]),
+                            PREV_STATISTICAL_CHARGES = Convert.ToDecimal(row["STATISTICAL_CHARGES"] == DBNull.Value ? "0" : row["STATISTICAL_CHARGES"]),
+                            TOTAL_AMT = Convert.ToDecimal(row["TOTAL_AMT"] == DBNull.Value ? "0" : row["TOTAL_AMT"]),
+
+                            CN_ID = Convert.ToDecimal(row["CN_ID"] == DBNull.Value ? "0" : row["CN_ID"]),
+                            JOB_ID = Convert.ToDecimal(row["JOB_ID"] == DBNull.Value ? "0" : row["JOB_ID"]),
+                            LP_ID = Convert.ToDecimal(row["LP_ID"] == DBNull.Value ? "0" : row["LP_ID"]),
+                            NO_OF_TRUCK = Convert.ToDecimal(row["NO_OF_TRUCK"] == DBNull.Value ? "0" : row["NO_OF_TRUCK"]),
+
+                            JOB_CODE = Convert.ToString(row["JOB_CODE"] == DBNull.Value ? "" : row["JOB_CODE"]),
+
+                        });
+                    }
+                    bcu.Bill_Dtls_List = dtl;
+                }
+            }
+
+            if ((bcu.ErrMsg ?? "").Trim() != "")
+            {
+                bcu.Bill_Id = 0;
+                Danger(string.Format("<b>" + bcu.ErrMsg + "</b>"), true);
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult BillTransportChargeUpdate(VM_BillTransportChargeUpdate bcu)
+        {
+            ViewBag.Header = "Bill Transport Charge Update";
+
+            if (bcu.Action == "Submit")
+            {
+                decimal result = 0;
+
+                if (bcu.Bill_Dtls_List != null)
+                {
+                    int flag = 0;
+                    foreach (var item in bcu.Bill_Dtls_List)
+                    {
+                        if (item.IsChecked)
+                        {
+                            flag = 1;
+                        }
+                    }
+                    if (flag > 0)
+                    {
+                        result = err_DAL.UPDATE_BILL_TRANSPORT_CHARGE(bcu);
+                    }
+                }
+
+                if (result > 0)
+                {
+                    Success(string.Format("<b>Updation is done successfully.</b>"), true);
+                }
+                else if ((bcu.ErrMsg ?? "").Trim() != "")
+                {
+                    Danger(string.Format("<b>" + bcu.ErrMsg + "</b>"), true);
+                }
+                else
+                {
+                    Danger(string.Format("<b>Updation is not done.</b>"), true);
+                }
+
+                TempData["Bill_No"] = bcu.Bill_No;
+                TempData.Keep("Bill_No");
+
+                return RedirectToAction("BillTransportChargeUpdate");
+            }
+
+            Bill_For_Transport_Charge_Update(bcu);
+            ModelState.Clear();
+            return View(bcu);
+        }
+
+        #endregion
+    
+
+
+        // created by rahul
+
+       #region JobUpdate
+
+        public ActionResult JobUpdate()
+        {
+            VM_Job_Update objJobUpdate = new VM_Job_Update();
+            objJobUpdate.Customer_list = new SelectList(db.Tbl_Customer_Mst.OrderBy(x => x.CUST_NAME), "CUST_CODE", "CUST_NAME");
+            
+            return View(objJobUpdate);
+        }
+
+
+        #endregion
+
+
+}
+}
+
+
+
+
