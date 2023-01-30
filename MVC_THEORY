@@ -121,3 +121,7 @@
                                        The client requests an HTML page that contains a form. The server includes two tokens in the response.
                                        One token is sent as a cookie. The other is placed in a hidden form field.
                               
+                              
+          Filters           -          Sometimes you want to perform logic either before an action method is called or after an action method runs.
+                                       To support this, ASP.NET MVC provides filters. Filters are custom classes that provide both a declarative and programmatic
+                                       means to add pre-action and post-action behavior to controller action methods.                    
