@@ -124,4 +124,22 @@
                               
           Filters           -          Sometimes you want to perform logic either before an action method is called or after an action method runs.
                                        To support this, ASP.NET MVC provides filters. Filters are custom classes that provide both a declarative and programmatic
-                                       means to add pre-action and post-action behavior to controller action methods.                    
+                                       means to add pre-action and post-action behavior to controller action methods.            
+                                       
+                                       
+                                       
+              Helpers   -             The ASP.NET MVC framework incorporates the below set of standard HTML Helpers.
+
+                                            @Html.TextBox
+                                            @Html.Password
+                                            @Html.TextArea
+                                            @Html.CheckBox
+                                            @Html.RadioButton
+                                            @Html.DropDownList
+                                            @Html.ListBox
+                                            @Html.Hidden
+                                            @Html.Display
+                                            @Html.Editor
+                                            @Html.ActionLink
+                                            @Html.BeginForm
+                                            @Html.Label
