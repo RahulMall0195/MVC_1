@@ -44,4 +44,95 @@ ___________________________________________________________Selected_____________
         });
         
         
+
+
+__________________________________________________________Disabled_______________________________________________________________    
+
+ function showdata(addressId) {
+            $('#divAddressDtl').show();
+            $(".speech-bubble").hide();
+            $.ajax({
+                type: "GET",
+                url: '@Url.Action("GetCustomerAddress_Dtls", "Master")',
+                data: { custAddID: addressId },
+                contentType: "application/json; charset=utf-8",
+                datatype: "json",
+                async: false,
+                success: function (data) {
+                    //alert(JSON.stringify(data));
+                    if (data.length > 0) {
+                        $('#txtAddress1').val(data[0].ADDRESS1);
+                        $('#txtAddress2').val(data[0].ADDRESS2);
+                        $('#txtPinCode').val(data[0].PINCODE);
+                        $('#txtCompEmail').val(data[0].COMP_EMAIL);
+                        $('#txtCompTelNo').val(data[0].COMP_TEL_NO);
+                        $('#txtCompFaxNo').val(data[0].COMP_FAX_NO);
+                        $('#txtContactPerson').val(data[0].CONTACT_PERSON);
+                        $('#txtMobileNo').val(data[0].MOBILE_NO);
+                        $('#txtTelNo').val(data[0].TEL_NO);
+                        $('#txtEmail').val(data[0].EMAIL);
+                        $('#ddlState').val(data[0].STATE_ID);
+                        $("#hdnStateID").val(data[0].STATE_ID);
+                        $('#ddlState').trigger('change');
+                        //$('#ddlCity').val(data[0].NCITY_CODE);
+                        $('select[id*=ddlCity] option[value="' + data[0].NCITY_CODE + '"]').attr("selected", "selected");
+                        $('#ddlAddressType').val(data[0].ADDRESS_TYPE_CODE);
+                        $('#StateID_PAN').val(data[0].GST1);
+                        $('#GST_1').val(data[0].GST2);
+                        $('#GST_3').val(data[0].GST4);
+                        $('#hdnPAN').val(data[0].PAN_NO);
+                        $('#hdnGST_ST_PAN').val(data[0].GST1);
+                        $('#hdnGST_1').val(data[0].GST2);
+                        $('#hdnGST_3').val(data[0].GST4);
+                        $('#hdnGST_ST_PAN').val(data[0].GSTIN);
+                        $('#hdnCUSTADD_ID').val(data[0].CUSTADD_ID);
+                        $('#GST_1').blur();
+                        $('#hdnCustID').val(data[0].CUST_ID);
+                        $('#ddlSalePerson').val(data[0].SALES_PERSON);
+                        $('#ddlCreditDays').val(data[0].CREDEIT_DAYS);
+                        $('#ddlBasedOn').val(data[0].BASED_ON);
+
+                        $('#txtCreditAmount').val(data[0].CREDIT_AMOUNT);
+
+                        $('#ddlState').attr('disabled', 'disabled');
+                        $('#GST_1').attr('disabled', 'disabled');
+                        $('#GST_3').attr('disabled', 'disabled'); 
+                        if (data[0].GST2 == '' && data[0].GST4 =='') {
+                            $('#GST_1').removeAttr('disabled');
+                            $('#GST_3').removeAttr('disabled');
+                        }
+
+                        if (data[0].PAN_NO == '' || data[0].PAN_NO == null) {
+                            $('#txtPAN').val('').removeAttr('disabled');
+                            $('#hdnPAN').val('');
+                        }
+                        else {
+                            $('#txtPAN').val(data[0].PAN_NO).attr('disabled', 'disabled');
+                            $('#hdnPAN').val(data[0].PAN_NO);
+                            $('#ErrortxtPAN').text('').hide();
+                        }
+
+                        if (data[0].INV_TYPE == '' || data[0].INV_TYPE == null) {
+                            $('#ddlInvoiceType').val('').removeAttr('disabled');
+                            $('#hdnInvoiceType').val('');
+                        }
+                        else {
+                            $('#ddlInvoiceType').val(data[0].INV_TYPE).attr('disabled', 'disabled');
+                            $('#hdnInvoiceType').val(data[0].INV_TYPE);
+                            $('#ErrorddlInvoiceType').text('').hide();
+                        }
+
+                        Validate();
+                        $(".speech-bubble").hide();
+                    } else {
+                        $("#hdnStateID").val('0');
+                    }
+
+                },
+                error: function (response) { alert(response.status); }
+            });
+        }
+
+        
+        
  
