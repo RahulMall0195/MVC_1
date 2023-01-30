@@ -28,5 +28,20 @@ ___________________________________________________________Selected_____________
         }
         
         
- _________________________________________________________________________________________________________________________     
+ __________________________________________________________CheckBox_______________________________________________________________     
         
+ $("#tblAddressDtl input[type=checkbox][id*=chkSelectEdit]").click(function () {
+            if ($(this).is(':checked')) {
+                $("#tblAddressDtl input[type=checkbox]").prop('checked', false);
+                $(this).prop('checked', true);
+                var custaddID = $(this).closest('tr').find($("input[type=hidden][id*='hdnAdd_ID']")).val();
+                $('#divAddressDtl').show();
+                showdata(custaddID);
+            } else {
+                $("#tblAddressDtl input[type=checkbox]").prop('checked', false);
+                $('#divAddressDtl').hide();
+            }
+        });
+        
+        
+ 
