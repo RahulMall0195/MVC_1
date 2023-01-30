@@ -1,0 +1,32 @@
+___________________________________________________________Selected__________________________________________________
+
+
+ function CustMasterDtl() {
+            var custCode = $("#customer  option:selected").val();
+            if (custCode != '') {
+                $.ajax({
+                    type: "GET",
+                    url: '@Url.Action("GetCustomerPanNo", "Master")',
+                    data: { custCode: custCode },
+                    contentType: "application/json; charset=utf-8",
+                    datatype: "json",
+                    async: false,
+                    success: function (data) {
+                        if (data.length > 0) {
+                            $('#hdnPAN').val(data[0].PAN_NO);
+                            $('#hdnCustID').val(data[0].CUST_ID);
+                            Validate();
+                            $(".speech-bubble").hide();
+                        }
+                    },
+                    error: function (response) { alert(response.status); }
+                });
+            } else {
+                $('#hdnPAN').val('');
+                $('#hdnCustID').val('0');
+            }
+        }
+        
+        
+ _________________________________________________________________________________________________________________________     
+        
