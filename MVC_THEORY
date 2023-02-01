@@ -146,3 +146,15 @@
                                             @Html.ActionLink
                                             @Html.BeginForm
                                             @Html.Label
+                                            
+                                            
+                                            
+                                            
+                                            
+                                            
+                                            
+       Method & Construction -   Constructor is used to create and initialize an Object . Method is used to execute certain statements.
+                                 A constructor is invoked implicitly by the System. A method is to be invoked during program code.                                     
+                                            
+                                            
+                                            
