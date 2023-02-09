@@ -163,3 +163,10 @@
                                             
                                             
                References   -    helps you to avoid plagiarism by making it clear which ideas are your own and which are someone else's.
+               
+               
+               
+               
+       Asynchronous AJAX    -    Asynchronous AJAX requests allow JavaScript to send a request but not to wait for a response.
+                                 JavaScript can continue to execute other tasks making the page responsive while the response is processed.
+                                 Asynchronous requests can be used by setting the async parameter in the open method.
