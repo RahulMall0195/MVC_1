@@ -170,3 +170,8 @@
        Asynchronous AJAX    -    Asynchronous AJAX requests allow JavaScript to send a request but not to wait for a response.
                                  JavaScript can continue to execute other tasks making the page responsive while the response is processed.
                                  Asynchronous requests can be used by setting the async parameter in the open method.
+
+  
+          Namespcae        -    Mvc namespace contains classes and interfaces that support the ASP.NET Model View Controller (MVC) framework for creating Web applications.
+          
+          
