@@ -1,0 +1,663 @@
+//______________________________________DAL_ERROR.cs________________________________
+//_____________________________BillGSTUpdateFor Show________________________________
+
+using MVCConsignment.ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Data.SqlTypes;
+using System.Linq;
+using System.Text;
+using System.Web;
+
+namespace MVCConsignment.App_Code.FAMS
+{
+ public class DAL_ERROR
+ {
+
+ string logisConnStr =  ConfigurationManager.ConnectionStrings["CALYX_LOGIS"].ToString();
+
+        SqlTransaction mytrans = null;
+
+        public DAL_ERROR() { }
+
+ #region
+
+        public DataSet BillGSTUpdate(string BRANCH_CODE, string BILL_NO)
+        {
+
+             SqlConnection conn = new SqlConnection(logisConnStr);
+
+SqlDataAdapter dAd = new SqlDataAdapter("USP_SELECT_BILL_DETAILS_FOR_TRANSPORT_CHARGE_UPDATE", conn);
+
+            dAd.SelectCommand.CommandType = CommandType.StoredProcedure;
+
+            DataSet dSet = new DataSet();
+            try
+            {
+                dAd.SelectCommand.Parameters.AddWithValue("@BILL_NO", BILL_NO);
+                dAd.SelectCommand.Parameters.AddWithValue("@BRANCH_CODE", BRANCH_CODE);
+
+                dAd.Fill(dSet, "BILL_DETAILS_FOR_TRANSPORT_CHARGE_UPDATE");
+                return dSet;
+            }
+            catch
+            {
+                throw;
+            }
+            finally
+            {
+                dSet.Dispose();
+                dAd.Dispose();
+                conn.Close();
+                conn.Dispose();
+            }
+        }
+
+
+  
+
+ //_________________________BillGSTUpdate For Update_____________________________
+
+        public string BillGSTUpdateSubmit(VM_BillGSTUpdate bcu)
+        {
+            string ErrMsg = "";
+
+            SqlConnection conn = new SqlConnection(logisConnStr);
+            conn.Open();
+            mytrans = conn.BeginTransaction();
+            SqlCommand dCmd1 = null;
+            try
+            {
+                dCmd1 = new SqlCommand("[Log].[USP_BILL_CUSTOMER_UPDATE]", conn);
+                dCmd1.CommandType = CommandType.StoredProcedure;
+                dCmd1.Transaction = mytrans;
+
+                SqlParameter sqlp2 = new SqlParameter();
+              
+                dCmd1.Parameters.AddWithValue("@BILL_ID", bcu.BILL_ID);
+                dCmd1.Parameters.AddWithValue("@CUST_ID", bcu.CUST_ID);
+                dCmd1.Parameters.AddWithValue("@CUSTADD_ID", bcu.Party_Address_ID);
+                dCmd1.Parameters.AddWithValue("@REMARKS", bcu.REMARKS);
+                dCmd1.Parameters.AddWithValue("@EMP_CODE",    Convert.ToString(HttpContext.Current.Session["EmployeeCode"]));
+                
+                dCmd1.ExecuteNonQuery();
+                ErrMsg = (string)dCmd1.Parameters["@REMARKS"].Value;
+
+                if (ErrMsg != "")
+                {
+                    mytrans.Commit();
+                }
+                else
+                {
+                    mytrans.Rollback();
+                }
+            }
+            catch
+            {
+                mytrans.Rollback();
+                throw;
+            }
+            finally
+            {
+                dCmd1.Dispose();
+                if (conn.State == ConnectionState.Open)
+                {
+                    conn.Close();
+                }
+                conn.Dispose();
+            }
+            return ErrMsg;
+        }
+
+ #endregion
+}
+}
+________________________ErrorController.cs_________________________
+using MVCConsignment.App_Code;
+using MVCConsignment.App_Code.FAMS;
+using MVCConsignment.Models;
+using MVCConsignment.UnitOfWorks;
+using MVCConsignment.ViewModel;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.Entity;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Web.Mvc;
+
+namespace MVCConsignment.Controllers
+{
+    public class ErrorController : BaseController
+    {
+        CALYX_LOGISEntities db = null;
+        IUnitOfWork UOW = null;
+        DAL_ERROR err_DAL = new DAL_ERROR();
+        string LOGIN_BRANCH = "";
+
+        public ErrorController(DbContext db1, IUnitOfWork iow)
+        {
+            UOW = iow;
+            db = (CALYX_LOGISEntities)db1;
+
+            if (System.Web.HttpContext.Current.Session["UserCredentials"] != null)
+            {
+                SP_LogIn_Result LogIn = (SP_LogIn_Result)System.Web.HttpContext.Current.Session["UserCredentials"];
+                if (LogIn != null)
+                {
+                    LOGIN_BRANCH = LogIn.Branch_Code;
+                }
+            }
+        }
+   #region BillGSTUpdate
+
+        public ActionResult BillGSTUpdate()
+        {
+            ViewBag.Header = "Bill No Update";
+            VM_BillGSTUpdate bcu = new VM_BillGSTUpdate();
+            bcu.Customer_list = new SelectList(db.Tbl_Customer_Mst.OrderBy(x => x.CUST_NAME), "CUST_CODE", "CUST_NAME");
+
+        if (TempData["Bill_No"] != null)
+            {
+                bcu.Search_Bill_No = Convert.ToString(TempData["Bill_No"]);
+               
+                BillGSTUpdate(bcu);
+                ModelState.Clear();
+            }
+            return View(bcu);
+        }
+
+
+
+        [HttpPost] 
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Show")]
+        [ActionName("BillGSTUpdate")]
+        public ActionResult BillGSTUpdate(VM_BillGSTUpdate bcu)
+        {
+             bcu.Customer_list = new SelectList(db.Tbl_Customer_Mst.OrderBy(x => x.CUST_NAME), "CUST_ID", "CUST_NAME");
+            
+            DataSet ds = err_DAL.BillGSTUpdate(LOGIN_BRANCH, bcu.Search_Bill_No);
+            if (ds.Tables.Count > 0)
+            {
+                ViewBag.Header = "BillGSTUpdate";
+                if (ds.Tables.Count > 0)
+                {
+foreach(DataRow row in ds.Tables[0].Rows)
+{                  
+bcu.BILL_NO = Convert.ToString(row["BILL_NO"] == DBNull.Value ? "" : row["BILL_NO"]);
+bcu.BILL_DATE = Convert.ToString(row["BILL_DATE"] == DBNull.Value ? "" : row["BILL_DATE"]);
+bcu.AMOUNT = Convert.ToDecimal(row["AMOUNT"] == DBNull.Value ? "0" : row["AMOUNT"]);
+
+bcu.prev_CustomerName = Convert.ToString(row["CUST_NAME"] == DBNull.Value ? "0" : row["CUST_NAME"]);
+bcu.prev_GST_No = Convert.ToString(row["GSTIN"] == DBNull.Value ? "0" : row["GSTIN"]);
+bcu.prev_Address = Convert.ToString(row["PARTY_ADDRESS"] == DBNull.Value ? "0" : row["PARTY_ADDRESS"]);
+bcu.BILL_ID = Convert.ToDecimal(row["BILL_ID"] == DBNull.Value ? "0" : row["BILL_ID"]);
+bcu.CUST_ID = Convert.ToDecimal(row["CUST_ID"] == DBNull.Value ? "0" : row["CUST_ID"]);
+  }
+ } 
+}
+ModelState.Clear();
+ return View(bcu);
+}
+
+
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [SubmitButtonSelector(Name = "Update")]
+        [ActionName("BillGSTUpdate")]
+        public ActionResult BillGSTUpdateSubmit(VM_BillGSTUpdate bcu)
+        {
+            ViewBag.Header = "GST BILL UPDATE";
+
+            string result = err_DAL.BillGSTUpdateSubmit(bcu);
+            if (result != "")
+            {
+        
+Success(string.Format("<b>Updation is done successfully.</b>"), true);
+TempData["Bill_No"] = bcu.BILL_NO;
+TempData.Keep("Bill_No");
+
+return RedirectToAction("BillTransportChargeUpdate");
+            }
+            else
+            {
+                Danger(string.Format("<b>Updation is not done.</b>"), true);
+            }
+
+bcu.Customer_list = new SelectList(db.Tbl_Customer_Mst.OrderBy(x => x.CUST_NAME),"CUST_CODE","CUST_NAME");
+
+            ModelState.Clear();
+            return View(bcu);
+        }
+
+        #endregion
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+___________________________VM_BillGST_Update.cs______________________________
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using MVCConsignment.Models;
+
+namespace MVCConsignment.ViewModel
+{
+    public class VM_BillGSTUpdate
+    {
+        [Display(Name = "Enter Bill No")]
+        [Required(ErrorMessage = "Enter Bill No .")]
+        public string Search_Bill_No { get; set; }
+
+     
+        public string BILL_NO { get; set; }
+
+        public string BILL_DATE { get; set; }
+
+        public Decimal AMOUNT { get; set; } 
+
+        public string prev_CustomerName { get; set; }
+
+        public string prev_GST_No { get; set; }
+
+        public string prev_Address { get; set; }
+
+        [Display(Name = "Select Customer Name")]
+        [Required(ErrorMessage = "Select Customer Name")]
+        public decimal CUST_ID { get; set; }                  
+
+        public string StateId { get; set; }
+        public SelectList StateList { get; set; }
+
+        [Display(Name = "Select GST_NO")]
+        [Required(ErrorMessage = "Select GST_NO")] 
+        public string GST_NO { get; set; }
+
+        [Display(Name = "Select Party Address")]
+        [Required(ErrorMessage = "Select Party Address")]
+        public decimal Party_Address_ID { get; set; }
+
+
+        [Required(ErrorMessage = "Select Customer list")]
+        public SelectList Customer_list { get; set; }
+
+        [Required(ErrorMessage = "Select GST NO List")]
+        public SelectList GST_NO_List { get; set; } 
+
+        public SelectList Party_AddressList { get; set; }
+
+        [Required(ErrorMessage = "Please Fill Remark .")]
+        public string REMARKS { get; set; }
+        
+        public decimal BILL_ID { get; set; }
+           
+        public string EMP_CODE { get; set; }
+       
+        public SelectList Address { get; set; }
+
+    }
+}
+
+_______________________________________BillGSTUpdate.cshtml_______________________________________
+@model MVCConsignment.ViewModel.VM_BillGSTUpdate
+@using MVCConsignment.AlertMessage
+
+@{
+    ViewBag.Title = "Bill GST Update";
+    Layout = "~/Views/Shared/_MainDashboard.cshtml";
+}
+<link href="~/Content/PagedList.css" rel="stylesheet" />
+<link href="~/Content/ResponsiveTable.css" rel="stylesheet" />
+<script src="~/Scripts/Custom/num2Word.js"></script>
+<link href="~/Content/Page.css" rel="stylesheet" />
+<script src="~/Scripts/Custom/custom_Validate.js"></script>
+
+@using (Html.BeginForm(FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    <div class="row" style="padding-bottom:1px;">
+        @{ Html.RenderPartial("_Alerts");}
+    </div>
+    <div class="row" style="padding-bottom:1px; text-align:center">
+        <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            <b id="alertMessage"></b>
+        </div>
+    </div>
+      
+     <div class="row" style="padding-bottom:5px;">
+        <div class="col-md-1">
+            Bill No
+        </div>
+        <div class="col-md-3">
+            @Html.TextBoxFor(model => model.Search_Bill_No, new { @class = "form-control", @id = "Search_Bill_No", autocomplete = "off", @maxlength = "20" })
+            <div class="speech-bubble"> 
+                @Html.ValidationMessageFor(model => model.Search_Bill_No, "", new { @id = "ErrorSearch_Bill_No" })
+            </div>
+        </div> 
+        <div class="col-md-3" style="text-align:left;">
+            <input type="submit" class="btn btn-success" name="Show" value="Show" style="margin-top:0px;margin-left:10px;width:80px;padding:3px;" id="btnSearch" />
+        </div>
+    </div>
+
+    if (!string.IsNullOrEmpty(@Model.BILL_NO))
+    {
+        <div class="row BillDetails DetailsForUpdate" style="text-align:left;">
+            <div style="padding-bottom:0px; ">
+                <div class=" form-group">
+                    <div class="col-md-12 col-xs-12 page-header" style="margin: 0px;">
+                        Bill Details
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div id="no-4-tables" class="row DetailsForUpdate">
+            <table class="col-md-12 table-bordered table-striped table-condensed cf">
+                <tbody>
+                    <tr>
+                        <td colspan="2" data-title="Bill No" class="col-md-2">Bill No</td>
+                        <td colspan="2" data-title="Bill No" class="col-md-2">
+                            <div id="divBillNo">&nbsp;@Html.DisplayFor(x => x.BILL_NO) </div>
+                        </td>
+                        <td colspan="2" data-title="Bill Date" class="col-md-2">Bill Date</td>
+                        <td colspan="2" data-title="Bill Date" class="col-md-2">
+                            <div id="divBillDate">&nbsp;@Html.DisplayFor(x => x.BILL_DATE)</div>
+                        </td>
+                        <td colspan="2" data-title="Amount" class="col-md-2">Amount</td>
+                        <td colspan="2" data-title="Amount" class="col-md-2">
+                            <div id="divAmount">&nbsp;@Html.DisplayFor(x => x.AMOUNT)</div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2" data-title="prevCustomerName" class="col-md-2">Customer Name</td>
+                        <td colspan="10" data-title="prevCustomerName" class="col-md-2">
+                            <div id="divprevCustomerNam">&nbsp;@Html.DisplayFor(x => x.prev_CustomerName)</div>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td colspan="2" data-title="prevGSTNo" class="col-md-2">GST No</td>
+                        <td colspan="2" data-title="prevGSTNo" class="col-md-2">
+                            <div id="divprevGSTNo">&nbsp;@Html.DisplayFor(x => x.prev_GST_No)</div>
+                        </td>
+
+                        <td colspan="2" data-title="prevAddress" class="col-md-2">Address</td>
+                        <td colspan="6" data-title="prevAddress" class="col-md-2">
+                            <div id="divprevAddress">&nbsp;@Html.DisplayFor(x => x.prev_Address)</div>
+                        </td>
+                     </tr>
+               </tbody>
+            </table>
+          </div>
+
+    
+        <div class="row DetailsForUpdate" style="text-align:left;">
+            <div style="padding-bottom:0px; ">
+                <div class=" form-group">
+                    <div class="col-md-12 col-xs-12 page-header" style="margin: 0px;">
+                       Update Details 
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    <div id="no-4-tables" class="row DetailsForUpdate">
+        <table class="col-md-12 table-bordered table-striped table-condensed cf">
+            <tbody>
+                <tr>
+                    <td colspan="2" data-title="Customer Name" class="col-md-2">Customer Name</td>
+                    <td colspan="10" data-title="Customer Name">
+                        @Html.DropDownListFor(model => model.CUST_ID, Model.Customer_list, "Select Customer Name", new { @class = "form-control", @id = "ddlCustomerName" })
+                        <div class="speech-bubble">
+                            @Html.ValidationMessageFor(model => model.CUST_ID, "", new { @id = "ErrorddlCustomerName" })
+                        </div>
+                    </td>
+                    <td colspan="2" class="col-md-2 col-lg-2">Party State Name</td>
+                    <td data-title="Party State Name" class="col-md-2 col-lg-2" colspan="2">
+                        @Html.DropDownListFor(model => Model.StateId, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "---- Select ----", new { @class = "form-control", @id = "ddlStateList" })
+                        <div class="speech-bubble">
+                            @Html.ValidationMessageFor(model => model.StateId, "", new { @id = "ErrorddlStateId" })
+                            <span class="field-validation-error" id="ErrorddlStateList"></span>
+                        </div>
+                    </td>
+                    
+                </tr>
+                <tr>
+                    <td colspan="2" class="col-md-2 col-lg-2">Party GSTIN</td>
+                    <td data-title="Party GSTIN" class="col-md-2 col-lg-2" colspan="2">
+                        @Html.DropDownListFor(model => Model.GST_NO, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "---- Select ----", new { @class = "form-control", @id = "ddlGSTIN" })
+                        <div class="speech-bubble">
+                            @Html.ValidationMessageFor(model => model.GST_NO, "", new { @id = "ErrorddlGST_NO" })
+                            <span class="field-validation-error" id="ErrorGSTINNo"></span>
+                        </div>
+                    </td>
+
+                        <td colspan="2" data-title="Address" class="col-md-2">Address</td>
+                    <td colspan="10" data-title="Address">
+                        @Html.DropDownListFor(model => model.Party_Address_ID, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "---- Select ----", new { @class = "form-control", @id = "ddlParty_Address" })
+                        <div class="speech-bubble">
+                            @Html.ValidationMessageFor(model => model.Party_Address_ID, "", new { @id = "ErrorddlParty_Address" })
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2">
+                        <div class="col-md-1">
+                            Remark
+                        </div>
+                    </td>
+                    <td colspan="14">
+                        @*<div class="col-md-3">*@
+                            @Html.TextBoxFor(model => model.REMARKS, new { @class = "form-control", @id = "txtRemark", autocomplete = "off", @maxlength = "120" })
+                            <div class="speech-bubble">
+                                @Html.ValidationMessageFor(model => model.REMARKS, "", new { @id = "ErrorRemark" })
+                            </div>
+                        @*</div>*@
+                    </td>
+                 </tr>
+
+                <tr>
+                    <td colspan="18">
+                        <div id="div_btnUpdate" class="row" style="padding-bottom:5px; text-align:center;">
+                            <div class="form-group">
+                                <div class="col-md-12">
+                                    <input type="submit" name="Update" class="btn btn-success" value="Update" style="margin-top:10px;margin-left:10px;width:80px;" id="btnUpdate" />
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+
+                @Html.HiddenFor(model => model.BILL_ID, new { @class = "form-control", @id = "hdnbtnBILL_ID" })
+           </tbody>
+        </table>
+    </div>
+}
+}
+
+
+@section Scripts {
+    @Scripts.Render("~/bundles/jqueryval")
+}
+
+    <script type="text/javascript">
+    $(document).ready(function () {
+        $(".speech-bubble").hide();
+        $("input[type=text]").on('keyup keypress blur change keydown', function (e) {
+            Validate();
+        });
+
+        function Validate() {
+            $(".speech-bubble").hide();
+            $(".speech-bubble").each(function () {
+                if ($(this).find('.field-validation-error').text() == "") {
+                    $(this).hide();
+                    return true;
+                }
+                else {
+                    $(this).show();
+                    return false;
+                }
+            });
+        }
+         
+
+        $('#btnUpdate').click(function () {
+
+        });
+
+        $('#btnSearch').click(function () {
+            $('.DetailsForUpdate').hide();
+        });
+
+        $("#ddlCustomerName").change(function () {
+            StateDtl();
+        });
+
+            function StateDtl() {
+            $("#ddlStateList").empty();
+            var partyId = $("#ddlCustomerName").val();
+
+            if(parseInt(partyId) != ""){
+            $.ajax({
+                    async: false,
+                    cache: false,
+                    type: "GET",
+                    url: '@Url.Action("GetCustomerState_Dtls", "Consignment")',
+                    data: { "Cust_ID": partyId },
+                    success: function (json, textStatus, xhr) {
+                        $("#ddlStateList").append('<option value=""> ---- Select ----- </option>');
+                        json = json || {};
+                       
+                        if (json.length > 0) {
+                            var j = 0;
+                            for (var i = 0; i < json.length; i++) {
+                               $("#ddlStateList").append('<option value="' + json[i].State_Code + '">' + json[i].State_Name + '</option>');
+                            }
+                         }
+                     }
+                });
+             }
+            else {
+                $("#ddlStateList").append('<option value=""> ---- Select ----- </option>');
+            }
+        }
+        
+        $("#ddlStateList").change(function (){
+            GSTIN();
+        });
+
+        function GSTIN() {
+            $("#ddlGSTIN").empty();  
+            var partyId = $("#ddlCustomerName").val();
+            var stateId = $("#ddlStateList option:selected").val();
+
+            $.ajax({
+                async: false,
+                cache: false,
+                type: "GET",
+                url: '@Url.Action("BindGSTINList", "Revenue")',
+                data: { "partyId": partyId, "stateId": stateId },
+                success: function (json, textStatus, xhr) {
+                    $("#ddlGSTIN").append('<option value=""> ---- Select ----- </option>');
+                    json = json || {};
+                    if (json.length > 0) {
+
+                        var j = 0;
+                        for (var i = 0; i < json.length; i++) {
+                            if (json[i].Text == null || $.trim(json[i].Text) == '') {
+                                j++;
+                                $("#ddlGSTIN").append('<option value="' + json[i].Value + '">Unregistered - ' + j + '</option>');
+                            }
+                            else {
+                                $("#ddlGSTIN").append('<option value="' + json[i].Text + '">' + json[i].Text + '</option>');
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+
+
+        $("#ddlGSTIN").change(function () {
+            Address();
+        });
+
+        function Address() {
+            $("#ddlParty_Address").empty();
+           
+            $.ajax({
+                async: false,
+                cache: false,
+                type: "GET",
+                url: '@Url.Action("GetCustomerAddress_Dtls_by_GSTIN", "Consignment")',
+                data: { "GSTIN": $("#ddlGSTIN").val() },
+                success: function (json, textStatus, xhr) {
+                    $("#ddlParty_Address").append('<option value=""> ---- Select ----- </option>');
+                    json = json || {};
+                    if (json.length > 0) {                       
+                        var j = 0;
+                        for (var i = 0; i < json.length; i++) {
+                           
+                            $("#ddlParty_Address").append('<option value="' + json[i].CUSTADD_ID + '">' + json[i].Address + '</option>');
+                           
+                        }
+                    }
+                 }
+             });
+          }
+
+                               
+    
+
+    function isNumberKey(evt) {
+        var charCode = (evt.which) ? evt.which : event.keyCode;
+        if (charCode > 31 && (charCode < 48 || charCode > 57))
+            return false;
+        return true;
+    }
+    });
+</script>
+
+
+
+
+
+
+                                                        
+    
+
+
+
+
+
