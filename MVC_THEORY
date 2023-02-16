@@ -175,3 +175,20 @@
           Namespcae        -    Mvc namespace contains classes and interfaces that support the ASP.NET Model View Controller (MVC) framework for creating Web applications.
           
           
+          
+         what is action in mvc ?
+                                                    
+                                In the context of the Model-View-Controller (MVC) architecture, an action refers to a controller method that 
+                                handles a particular request from the user and generates an appropriate response.
+                                The controller is responsible for receiving requests from the user and directing the flow
+                                of the application by invoking the relevant model and view components to generate the appropriate response.
+                                The action method typically takes input from the user (via the request), interacts with the model to retrieve or
+                                modify data, and selects the appropriate view to display the response.
+
+                                For example, in a web application that manages user accounts, an action method might 
+                                handle a request to create a new user account. The method would take the input from the user (such as username and password),
+                                validate it, interact with the model to create a new user record, and then select the appropriate view to display a
+                                confirmation message or an error message if the creation failed.
+
+                                Actions are a fundamental concept in the MVC architecture and are essential for separating concerns and promoting
+                                modularity and maintainability in software development.
