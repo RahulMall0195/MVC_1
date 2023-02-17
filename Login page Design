@@ -1,0 +1,262 @@
+using System;
+using System.Linq;
+using System.Web.Mvc;
+using MVCConsignment.Models;
+using MVCConsignment.UnitOfWorks;
+using MVCConsignment.ViewModel;
+using System.Data.Entity;
+using System.Web.Security;
+using System.Net;
+using System.Text;
+using System.IO;
+
+using System.Web.Script.Serialization;
+using System.Collections.Generic;
+using System.Data;
+using MVCConsignment.App_Code;
+
+namespace MVCConsignment.Controllers
+{
+    public class EmployeeController : BaseController
+    {
+        CALYX_LOGISEntities db = null;
+        IUnitOfWork UOW = null;
+        HRMEntities dbHRM = new HRMEntities();
+        DAL_Common common = new DAL_Common(); 
+
+        public EmployeeController(DbContext db1, IUnitOfWork iow)
+        {
+            UOW = iow;
+            db = (CALYX_LOGISEntities)db1;
+        }
+
+        public ActionResult Login(string ReturnUrl)
+        {
+
+            ViewBag.returnurl = ReturnUrl;
+            if (Request.QueryString["m"] == null)
+            {
+                Random r = new Random();
+                ViewBag.sesskey = r.Next(0, 9999).ToString();
+                Session["ModeOfSite"] = "Web";
+            }
+            else
+            {
+                string m = Request.QueryString["m"];
+                var accMob = dbHRM.vw_Employee_Mst.Where(x => x.mobileno == m || x.OfficialContact == m).ToList();
+                var acc = dbHRM.SP_LogIn(accMob.FirstOrDefault().Employee_Code).ToList<SP_LogIn_Result>();
+                if (acc.Count() > 0)
+                {
+
+                    FormsAuthentication.SetAuthCookie(acc.First().Employee_Code, false);
+                    Session["UserCredentials"] = acc.First();
+                    Session["EmployeeCode"] = acc.First().Employee_Code;
+                    Session["EmployeeName"] = acc.First().EmpName;
+                    Session["ModeOfSite"] = "mob";
+                    return Redirect(ReturnUrl == null ? "~/Employee/Index" : ReturnUrl);
+
+                }
+
+
+            }
+            return View();
+        }
+        [HttpPost]
+        public ActionResult Login(EmployeeLogIn obj, string ReturnUrl, string sesskey)
+        {
+            try
+            {
+                MD5Demo encript = new MD5Demo();
+                string str = string.Empty;
+                string total = string.Empty;
+                var acc = dbHRM.SP_LogIn(obj.EmployeeCode).ToList<SP_LogIn_Result>();
+
+                if (acc.Count() > 0)
+                {
+                    str = acc.First().Password;
+                    total = encript.MD5(str.ToString() + sesskey);
+
+                    if (total != obj.Password)
+                    {
+                        ViewBag.Message = "Password not recognised.";
+                    }
+                    else
+                    {
+                        FormsAuthentication.SetAuthCookie(obj.EmployeeCode, false);
+                        Session["UserCredentials"] = acc.First();
+                        Session["EmployeeCode"] = acc.First().Employee_Code;
+                        Session["EmployeeName"] = acc.First().EmpName;
+                        return Redirect(ReturnUrl == null ? "~/Employee/Index" : ReturnUrl);
+                        // return Redirect(ReturnUrl == null ? "~/Employee/EmployeeDashboard" : ReturnUrl);
+                    }
+
+                }
+                else
+                {
+                    ViewBag.Message = "Employee code is invalid.";
+                }
+                ViewBag.returnurl = ReturnUrl;
+                ViewBag.sesskey = sesskey;
+            }
+            catch (System.Exception ex)
+            {
+                ViewBag.Message = ex.Message;
+            }
+
+            return View(obj);
+        }
+
+        [Authorize]
+        public ActionResult Index()
+        {
+            ViewBag.Header = "Welcome To Main Dash Board ";
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+            ViewBag.TodayLoadCount = db.usp_Select_TodayLoad(Convert.ToString(LogIn.Branch_Code)).Count();
+            ViewBag.TodayTruckCount = db.usp_Select_TodayAvailableTruck().Count();
+            /*
+            if (db.usp_Select_RegularLoad().Count() > 0)
+            {
+                ViewBag.RegularLoadCount = db.usp_Select_RegularLoad().Sum(b => b.NO_OF_TRUCK);
+            }
+            else
+            {
+                ViewBag.RegularLoadCount = 0;
+            }
+            */
+
+            if (db.Usp_Select_Regular_LoadRequest().Count() > 0)
+            {
+                ViewBag.RegularLoadCount = db.Usp_Select_Regular_LoadRequest().Sum(b => b.Veh_Pending);
+            }
+            else
+            {
+                ViewBag.RegularLoadCount = 0;
+            }
+
+            //For Index menu
+            List<usp_IndexMenu_Access_List_Result> indexMenuList =new List<usp_IndexMenu_Access_List_Result>();
+            if (Session["EmployeeCode"] != null)
+            {
+                indexMenuList = db.usp_IndexMenu_Access_List(Session["EmployeeCode"].ToString()).ToList<usp_IndexMenu_Access_List_Result>();
+            }
+            return View(indexMenuList);
+        }
+
+
+        [ChildActionOnly]
+        public PartialViewResult _MenuList()
+        {
+            List<usp_CN_Menu_List_Result> menuList = new List<usp_CN_Menu_List_Result>();
+            if (Session["EmployeeCode"] != null)
+            {
+                menuList = db.usp_CN_Menu_List(Session["EmployeeCode"].ToString()).ToList<usp_CN_Menu_List_Result>();
+                //var menuList = db.usp_CN_Menu_List(Session["EmployeeCode"].ToString()).ToList<usp_CN_Menu_List_Result>().FindAll(x=>x.pMenuId==null); 
+            }
+            return PartialView(menuList);
+        }
+
+        [ChildActionOnly]
+        public PartialViewResult _BranchAccessList()
+        {
+            List<SelectListItem> _branchList = new List<SelectListItem>(); 
+            VM_BranchAccessList BranchAccessList = new VM_BranchAccessList();
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+
+            if (Session["EmployeeCode"] != null)
+            {
+
+                DataTable dt = common.LoadEmployeeBranchAccessByCompany(LogIn.Employee_Code, LogIn.Comp_Code);
+
+                foreach (DataRow dr in dt.Rows)
+                {
+                    _branchList.Add(new SelectListItem() { Text = dr["Branch_Name"].ToString(), Value = dr["Branch_Code"].ToString() });
+                }
+
+
+                BranchAccessList.BRANCH_CODE = LogIn.Branch_Code;
+                BranchAccessList.branchList = _branchList;
+            }
+
+            return PartialView(BranchAccessList);
+        }
+
+        public ActionResult ChangeBranch(string Branch_Code)
+        {
+            SP_LogIn_Result LogIn = (SP_LogIn_Result)Session["UserCredentials"];
+            string result = "";
+            if (LogIn != null)
+            {
+
+                LogIn.Branch_Code = Branch_Code;
+                Session["UserCredentials"] = LogIn;
+                result = "Done";
+            }
+            else
+            {
+                result = "Error";
+            }
+
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult LogOff()
+        {
+            //WebSecurity.Logout();
+            FormsAuthentication.SignOut();
+            Session.Clear();
+            Session.Abandon();
+            return RedirectToAction("Login", "Employee");
+        }
+
+        [Authorize]
+        public ActionResult EmployeeDashboard()
+        {
+            return View();
+        }
+
+        public JsonResult GetEmployeeCode()
+        {
+            string s = Convert.ToString(Session["EmployeeCode"]);
+            if (s == null)
+            {
+                s = "";
+            }
+            return Json(s, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult SendNotification()
+        {
+            FCMPushNotification result = new FCMPushNotification();
+            try
+            {
+                string title = "Calyx_title";
+                string body = "Pramesh Calyx _message";
+                string deviceId = "eyW-0rg6bBg:APA91bFjGfK8-24PY2QMXP_DwZcZ9Z-vSdgLbaA9YN5rYlgPvj3QuX8OEN1GD8KNYZZBT147VLg87i8Ff-jYBDMgE1oLPX6o5Z9InzpPt2kNgUebEr58u0aT139Uv18JRQ7Ug7DjqjM4";
+                result.SendNotification(title, body, "", deviceId);
+                if (result.Successful)
+                {
+
+                }
+                //result.Response
+
+            }
+            catch
+            {
+                throw result.Error;
+            }
+            return View("Index");
+        }
+
+
+        public ActionResult OnWheelProcess()
+        {
+            return View();
+        }
+
+        public ActionResult test()
+        {
+
+            return View();
+        }
+    }
+}
