@@ -1,0 +1,91 @@
+<script type="text/javascript">
+       function CheckDatesMinLessMax(source, arg) {                  
+            
+            var day, month, year;
+            var fromdate = document.getElementById('<%=txtFDate.ClientID %>');
+            var todate = document.getElementById('<%=txtTDate.ClientID %>');
+            day = fromdate.value.split("/")[0];
+            month = fromdate.value.split("/")[1];
+            year = fromdate.value.split("/")[2];
+            var fromdate1 = month + '/' + day + '/' + year;
+            day = todate.value.split("/")[0];
+            month = todate.value.split("/")[1];
+            year = todate.value.split("/")[2];
+            var todate1 = month + '/' + day + '/' + year;
+            var myDate1 = new Date(fromdate1);
+            var myDate2 = new Date(todate1);         
+                                       
+        }
+
+        function CheckDatesMonthMax(source, arg) {
+            var day, month, year;            
+            var fromdate = document.getElementById('<%=txtFDate.ClientID %>');
+            day = fromdate.value.split("/")[0];
+            month = fromdate.value.split("/")[1];
+            year = fromdate.value.split("/")[2];
+            var fromdate1 = month + '/' + day + '/' + year;
+            var myDate1 = new Date(fromdate1);
+            var dt = new Date();
+            month = dt.getMonth();
+            day = dt.getDate();
+            year = dt.getFullYear();
+            var cdate = month + '/' + 1 + '/' + year;
+            var cDate1 = new Date(cdate);    
+        }
+
+        function checkDate(sender, args) {
+            var dt = new Date();
+            var day = dt.getDate();
+            var month = dt.getMonth();
+            var year = dt.getFullYear();
+            var dt = new Date(year, month, day);
+            var _Predt = new Date(year, month, day);    
+        }
+    </script>  
+    
+    <tr>
+                <td class="Left">
+                    From Date
+                </td>
+                <td class="Right">
+                    <asp:TextBox  ID="txtFDate" runat="server" CssClass="newRpt_date" Style="width:80px;"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="RequiredFieldValidator8" runat="server" ValidationGroup="vin1"
+                        Display="Dynamic" ControlToValidate="txtFDate" ErrorMessage="Select From Date."
+                        ToolTip="Select From Date." Text="*" Enabled="true"></asp:RequiredFieldValidator>
+                    <SGG:MaskedEditExtender ID="txtFDate_MaskedEditExtender" runat="server" Enabled="True"
+                        Mask="99/99/9999" MaskType="Date" TargetControlID="txtFDate">
+                    </SGG:MaskedEditExtender>
+                    <SGG:CalendarExtender ID="txtFDate_CalendarExtender" runat="server" Enabled="True"
+                        Format="dd/MM/yyyy" TargetControlID="txtFDate" OnClientDateSelectionChanged="checkDate">
+                    </SGG:CalendarExtender>
+                    <asp:RegularExpressionValidator ID="RegularExpressionValidator4" runat="server" ControlToValidate="txtFDate"
+                        ErrorMessage="*" SetFocusOnError="True" ToolTip="Enter From Date in (DD/MM/YYYY) Format."
+                        ValidationExpression="^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$"
+                        ValidationGroup="vin1" Display="Dynamic"></asp:RegularExpressionValidator>
+                    <asp:CustomValidator ID="CustomValidator2" runat="server" ErrorMessage="Please Enter From Date."
+                        ToolTip="Please Enter From Date." ClientValidationFunction="CheckDatesMonthMax"
+                        Display="Dynamic" ValidationGroup="vin1" SetFocusOnError="True" ControlToValidate="txtFDate">*</asp:CustomValidator>
+                </td>
+                <td class="Left">
+                    To Date
+                </td>
+                <td class="Right">
+                    <asp:TextBox  ID="txtTDate" runat="server" CssClass="newRpt_date" Style="width:80px"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ValidationGroup="vin1"
+                        Display="Dynamic" ControlToValidate="txtTDate" ErrorMessage="Select To Date."
+                        ToolTip="Select To Date." Text="*" Enabled="true"></asp:RequiredFieldValidator>
+                    <SGG:MaskedEditExtender ID="Maskededitextender1" runat="server" Enabled="True" Mask="99/99/9999"
+                        MaskType="Date" TargetControlID="txtTDate">
+                    </SGG:MaskedEditExtender>
+                    <SGG:CalendarExtender ID="Calendarextender1" runat="server" Enabled="True" Format="dd/MM/yyyy"
+                        TargetControlID="txtTDate" OnClientDateSelectionChanged="checkDate">
+                    </SGG:CalendarExtender>
+                    <asp:RegularExpressionValidator ID="RegularExpressionValidator1" runat="server" ControlToValidate="txtTDate"
+                        ErrorMessage="*" SetFocusOnError="True" ToolTip="Enter From Date in (DD/MM/YYYY) Format."
+                        ValidationExpression="^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$"
+                        ValidationGroup="vin1" Display="Dynamic"> </asp:RegularExpressionValidator>
+                    <asp:CustomValidator ID="CustomValidator1" runat="server" ErrorMessage="Please Enter To Date."
+                        ToolTip="Please Enter To Date." ClientValidationFunction="CheckDatesMinLessMax"
+                        Display="Dynamic" ValidationGroup="vin1" SetFocusOnError="True" ControlToValidate="txtTDate">*</asp:CustomValidator>
+                </td>
+            </tr>
