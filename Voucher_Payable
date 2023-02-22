@@ -1,0 +1,1960 @@
+____________________________________________GeneralVoucher_Payable.aspx___________________________________________
+
+<%@ Page Language="C#" AutoEventWireup="true" CodeFile="GeneralVoucher_Payable.aspx.cs"
+    EnableEventValidation="false" Inherits="GeneralVoucher_Payable" %>
+
+<%@ Register Assembly="AjaxControlToolkit" Namespace="AjaxControlToolkit" TagPrefix="sgg" %>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>::SG Group::</title>
+    <link href="../../css/style1.css" rel="stylesheet" type="text/css" />
+    <link href="../../css/FA_1.css" rel="stylesheet" type="text/css" />
+    <script src="../../Jquery/jquery-1.4.2.min.js" type="text/javascript"></script>
+    <link href="../../css/FA_Msg.css" rel="stylesheet" type="text/css" />
+    <script src="https://jquery-json.googlecode.com/files/jquery.json-2.2.min.js" type="text/javascript"></script>
+    <script src="../../Scripts/num2Word.js" type="text/javascript"></script>
+    <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/smoothness/jquery-ui.css" />
+    <script type="text/javascript">
+
+        function PrintDiv() {
+            var divToPrint = document.getElementById('divToPrint');
+            var popupWin = window.open('', '_blank', 'width=780,height=380');
+            popupWin.document.write('<html><head><link href="../../css/FA_Msg.css" rel="stylesheet" type="text/css" /> </head><body onload="window.print()">'
+                                        + divToPrint.innerHTML + '</html>');
+            popupWin.document.close();
+
+            //   setTimeout(function() { popupWin.close();tblDuplicate.style.display='none'; }, 10); 
+        }
+     
+    </script>
+    <style type='text/css'>
+        .SlideBox
+        {
+            margin: 0px 0px 0px 0px;
+            padding: 15px 10px 10px 15px;
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            width: 900px;
+            max-height: 400px;
+            text-align: center;
+            position: absolute;
+            display: none;
+            background-color: White;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+    <script type="text/javascript">
+
+
+        $(document).ready(function () {
+
+            $(window).load(function () {
+                Flavor();
+            });
+
+            payTo();
+
+            $('#<%=rblPayTo.ClientID %>').change(function (e) {
+                payTo();
+
+                // Note : This Section Used for Fill Ledger Code When User Change Dr/Cr
+                // Added : By Sunil Kumar Singh Date: 20-02-2014
+                var listItems = "<option value='0'>Select Ledger Name</option>"; ;
+                $.ajax({
+                    type: "POST",
+                    url: "../OpenningBalance.asmx/BindAccountDetails",
+                    data: "{'compCode':'" + $('#<%=hiddComp.ClientID%>').val() + "','PayTo':'" + $("select[id*=rblPayTo]").val() + "'}",
+                    contentType: "application/json; charset=utf-8",
+                    datatype: "json",
+                    success: function (data) {
+                        if (data.d.length > 0) {
+                            for (var i = 0; i < data.d.length; i++) {
+                                listItems += "<option value='" + data.d[i].lid + "'>" + data.d[i].lName + "</option>";
+                            }
+                            $('#ddlHiddAccountName').html(listItems);
+                        }
+                        success(eval(response.d));
+                    },
+                    error: function (response) { }
+                });
+            });
+
+            function payTo() {
+                if ($('#<%=rblPayTo.ClientID %> option:selected').val() == "O") {
+                    $("[type='text'][id*=txtFlavor]").show();
+                    $('#<%=ddlFavolur.ClientID %>').hide();
+                    ValidatorEnable($('[id*=Required_Flavor]')[0], false);
+                    ValidatorEnable($('[id*=Required_Flavor1]')[0], true)
+                }
+                else {
+                    $('#<%=ddlFavolur.ClientID %>').show();
+                    $("[type='text'][id*=txtFlavor]").hide();
+                    ValidatorEnable($('[id*=Required_Flavor]')[0], true);
+                    ValidatorEnable($('[id*=Required_Flavor1]')[0], false)
+                }
+            }
+
+            //-----Added By Kathera on 16/09/2013 for Change in Vendor Automatic Amount on Selection of Vendor-----//
+
+            $('#imgcheck').live("click", function () {
+                var c = 0;
+                var d = 0;
+                $('#<%=gvDetails.ClientID %> input[type=checkbox][id*=imgcheck]').each(function () {
+
+                    if ($(this).is(':checked')) {
+                        $(this).closest("tr").find('input[type=text][id*="eJAmt"]').removeAttr("disabled");
+                        c = parseFloat(parseFloat(c) + parseFloat($(this).closest("tr").find('span[id*="JAmt"]').text())).toFixed(2);
+                        d = parseFloat(parseFloat(d) + parseFloat($(this).closest("tr").find('input[type=text][id*="eJAmt"]').val())).toFixed(2);
+                    }
+                    else {
+                        $(this).closest("tr").find('input[type=text][id*="eJAmt"]').attr("disabled", true);
+
+                    }
+                });
+
+                $("span[id*='txtacttot']").text(myCurrency(c));
+                $("span[id*='txtnewtot']").text(myCurrency(d));
+
+            });
+            $('#btncan').live("click", function () {
+                $('#divjournaL').hide();
+            });
+
+            // Alter By : Sunil Kumar Singh -- Date:18/02/2014
+            // Use For Vendor Payment
+            $('#btnok').live("click", function () {
+                var totalRows = $("table[id*='GVLedger'] tr").length
+                var a = 0;
+                var b = "";
+                var c = "";
+                var d = "";
+                var hiddJouVoucherNo = $('#<%=hiddJouVoucherNo.ClientID %>');
+                var hiddJouVendAmt = $('#<%=hiddJouVendAmt.ClientID %>');
+                var hiddJid = $('#<%=hiddJid.ClientID %>');
+                var hiddLid_1 = $('#<%=hiddLid_1.ClientID %>');
+
+                // use for Enable Dr Cr Added By Devendra Kuamr
+                // Dated : 22-02-2014                            
+                $("table[id*=GVLedger] tbody>tr:nth-child(2)").find('[type=text][id*="txtDrAmt"]').attr("disabled", "");
+                $("table[id*=GVLedger] tbody>tr:nth-child(3)").find('[type=text][id*="txtCrAmt"]').attr("disabled", "");
+
+                $('#<%=gvDetails.ClientID %> input[type=checkbox][id*=imgcheck]').each(function () {
+                    if ($(this).is(':checked')) {
+
+                        a = parseFloat(parseFloat(a) + parseFloat($(this).closest("tr").find('input[type=text][id*="eJAmt"]').val())).toFixed(2);
+                        b = b + ',' + $(this).closest("tr").find('input[type=text][id*="eJAmt"]').val();
+                        c = c + ',' + $(this).closest("tr").find('span[id*="spanjno"]').text();
+                        d = d + ',' + $(this).closest("tr").find('input[type=hidden][id*="hiddjid"]').val();
+                        hiddLid_1.val($(this).closest("tr").find('input[type=hidden][id*="hiddlid"]').val());
+                    }
+                });
+
+                hiddJouVoucherNo.val(c);
+                hiddJouVendAmt.val(b);
+                hiddJid.val(d);
+
+                //alert($("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find('[type=text][id*="txtdrcr"]').val());
+
+                if ($("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find('[type=text][id*="txtdrcr"]').val() == 'Cr') {
+
+                    $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find('[type=text][id*="txtCrAmt"]').val(a);
+                    $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find('[type=text][id*="txtDrAmt"]').attr("disabled", "disabled");
+                }
+                else {
+                    $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find('[type=text][id*="txtDrAmt"]').val(a);
+                }
+
+               // $("#GVLedger input[type=text]").keyup();
+                // Start : Calculate Total Of Cr | Dr Amount, to display at Footer - For Vendor Payment
+                var DrAmount = 0;
+                var CrAmount = 0;
+                $("table[id*=GVLedger] tr").each(function () {
+                    if ($(this).find("input[id*='txtDrAmt']").size() > 0) {
+                        DrAmount = DrAmount + parseFloat($(this).find("input[id*='txtDrAmt']").val());
+                    }
+                    if ($(this).find("input[id*='txtCrAmt']").size() > 0) {
+                        CrAmount = CrAmount + parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                    }
+                });
+
+                $("span[id*='lblDr']").text(myCurrency(DrAmount.toFixed(2)));
+                $("span[id*='lblCr']").text(myCurrency(CrAmount.toFixed(2)));
+                // End of : Calculate Total Of Cr | Dr Amount, to display at Footer - For Vendor Payment
+
+                $('#<%=hdnVendrAmt.ClientID %>').val(a); // Vendor Amount Put For Check Edit Mode
+
+                $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find('select[id*="ddlAccountName"]').val(hiddLid_1.val());
+                $("[type=hidden][id*='hiddvno']").val($(this).closest("tr").find("span[id*='spanjno']").text());
+                $('#divjournaL').delay(300).slideUp(900);
+            });
+
+            //----------Restriciting User to Enter Numeric Only--------------//
+
+            $('#eJAmt').live("keydown", function (e) {
+
+
+                var keyCode = e.which; // Capture the event
+
+                //190 is the key code of decimal if you dont want decimals remove this condition keyCode != 190
+
+                if (keyCode != 8 && keyCode != 9 && keyCode != 13 && keyCode != 37 && keyCode != 38 && keyCode != 39 && keyCode != 40 && keyCode != 46 && keyCode != 110 && keyCode != 190) {
+
+                    if (keyCode < 48) {
+
+                        e.preventDefault();
+                    }
+
+                    else if (keyCode > 57 && keyCode < 96) {
+
+                        e.preventDefault();
+                    }
+
+                    else if (keyCode > 105) {
+
+                        e.preventDefault();
+                    }
+                }
+            });
+
+            //----------Gridview Textbox on Blur and Keyup------//
+            $('#eJAmt').live("blur keyup", function () {
+
+                var a = $(this).closest("tr").find('span[id*="JAmt"]').text();
+                var b = $(this).val();
+                var c = 0;
+                var d = 0;
+
+                $('#<%=gvDetails.ClientID %> input[type=checkbox][id*=imgcheck]').each(function () {
+                    if ($(this).is(':checked')) {
+                        c = parseFloat(parseFloat(c) + parseFloat($(this).closest("tr").find('span[id*="JAmt"]').text())).toFixed(2);
+                        d = parseFloat(parseFloat(d) + parseFloat($(this).closest("tr").find('input[type=text][id*="eJAmt"]').val())).toFixed(2);
+
+                    }
+                });
+
+                $("#hiddmax").val(c);
+                $("#hiddaccmax").val(c);
+
+                $("span[id*='txtacttot']").text(myCurrency(c));
+                $("span[id*='txtnewtot']").text(myCurrency(d));
+
+                if (b.length > 20) {
+                    alert('Maximum Length Allow Ten Numbers');
+                    $(this).val(a);
+                }
+                if (parseFloat(b) > parseFloat(a)) {
+                    alert('Pay Amount Should be less or equal to Amount !!!');
+                    $(this).val(a);
+                }
+            });
+
+
+            //----Ended By Kathera on 16/09/2013 for change in vendor automatic amount on selection of vendor-----//
+
+            //Vendor Journal List
+
+            //---------Start Modfied By Kathera on 16/09/2013 (binding sequence changed)--------------------------//
+
+            $('#ddlFavolur,#txtFlavor,').bind("change keyup", function () {
+                Flavor();
+            });
+
+            function Flavor() {
+                $("table[id*=GVLedger] tr").each(function (e) {
+                    if (e == "2") {
+                        // For SGX
+                        if ($('#<%=hiddComp.ClientID%>').val() == 'CO00000001') {
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("45").html("Cash in Bank"));
+                            $(this).find('[type=text][id*="txtDrAmt"]').attr("disabled", "disabled");
+                            $(this).closest("tr").find('[type=text][id*="txtCrAmt"]').attr("disabled", "");
+                            $(this).find('[type=text][id*="txtdrcr"]').val("Cr").attr("disabled", "disabled");
+                            $(this).find("select[id*=ddlAccountName]").val(45);
+                            $(this).closest("tr").find("select[id*=ddlAccountName] option:not(:selected)").each(function (i, e) {
+                                $(this).hide();
+                            });
+                        }
+
+                    }
+                });
+
+
+                // Changes By :Sunil Kumar Singh Date: 19-02-2014   
+                // Use For Vendor Payment Only
+                $('#divjournaL').hide();
+                $("table[id*=gvDetails] tr:gt(0)").remove();
+                if ($("select[id*=ddlFavolur]").val() != "0") {
+                    $.ajax({
+                        type: "POST",
+                        contentType: "application/json; charset=utf-8",
+                        url: "../OpenningBalance.asmx/JournalVoucher",
+                        // Change by Devendra Kumar Dated : 25-09-2015 
+                        data: "{'Particular':'" + $("select[id*=ddlFavolur]").val() + "','compCode':'" + $('#<%=hiddComp.ClientID%>').val() + "','branchCode':'" + $("span[id*='lblBrCode']").text() + "','TransDt':'" + $("span[id*='lblTransactionDate']").text() + "'}",
+                        //data: "{'Particular':'" + $("select[id*=ddlFavolur]").val() + "'}",
+
+                        dataType: "json",
+                        success: function (data) {
+                            if (data.d.length > 0) {
+                                $("#gvDetails").append("<tr style='font-size:12px;font-weight:bold;color:Blue'><td colspan='7'>List of Payable for : <u>" + $("#ddlFavolur option:selected").text() + "</u></td></tr>");
+                                for (var i = 0; i < data.d.length; i++) {
+                                    if (i % 2 == 0) {
+                                        $("#gvDetails").append("<tr class='alternaterow'><td align='center'><span id='slno'>" + (i + 1) + "</span></td><td><span id='spanjno'>" + data.d[i].Jno + "</span><input id='hiddjid' type='hidden' value=" + data.d[i].jid + " /> </td><td><span id='spanCostcen'>" + data.d[i].CostCenter + "</span> <input id='hiddlid' type='hidden' value=" + data.d[i].lid + " /></td> <td>" + data.d[i].lName + "</td><td width='100px' align='right'><span id='JAmt'>" + data.d[i].Amt + "</span></td><td width='100px' align='right'><input id='eJAmt' name='eJAmt' style='text-align:right;width:100px;font-size:14px;font-weight:bold'  type='text' value='" + data.d[i].Amt + "' disabled/></td><td align='center'><input id='imgcheck' name='imgcheck' type='checkbox'/></td></tr>");
+                                    }
+                                    else {
+                                        $("#gvDetails").append("<tr class='normal_1'><td align='center'><span  id='slno'>" + (i + 1) + "</span></td><td><span id='spanjno'>" + data.d[i].Jno + "</span><input id='hiddjid' type='hidden' value=" + data.d[i].jid + " /> </td><td><span id='spanCostcen'>" + data.d[i].CostCenter + "</span> <input id='hiddlid' type='hidden' value=" + data.d[i].lid + " /></td> <td>" + data.d[i].lName + "</td><td width='100px' align='right'><span id='JAmt'>" + data.d[i].Amt + "</span></td><td width='100px' align='right'><input id='eJAmt' name='eJAmt' style='text-align:right;width:100px;font-size:14px;font-weight:bold'  type='text' value='" + data.d[i].Amt + "' disabled/></td><td align='center'><input id='imgcheck' name='imgcheck' type='checkbox'/></td></tr>");
+                                    }
+                                }
+                                $("#gvDetails").append("<tr class='header_1'><td colspan='4' align='right'>Total Payment</td><td  align='right'><span id='txtacttot'></span></td><td  align='right'><span id='txtnewtot'></span></td><td></td></tr>");
+                                $("#gvDetails").append("<tr><td colspan='7' align='center'> <input id='btnok' type='button' value='Pay' class='Submit'/>&nbsp;&nbsp;<input id='btncan' type='button' value='Close'  class='Submit'/></td></tr>");
+                                $("#divjournaL").delay(300).slideDown(500).html($("#gvDetails").show());
+                            }
+                            // Added By Devendra Kuamr Due to Vendor Zero Amount then not allow of dr cr amount entry
+                            // Dated : 22-02-2014
+                            else {
+                                if ($("select[id*=rblPayTo]").val() == 'V') {
+                                    $("table[id*=GVLedger] tbody>tr:nth-child(2)").find('[type=text][id*="txtDrAmt"]').val('0.00');
+                                    $("table[id*=GVLedger] tbody>tr:nth-child(3)").find('[type=text][id*="txtCrAmt"]').val('0.00');
+
+                                    $("span[id*='lblDr']").text('0.00');
+                                    $("span[id*='lblCr']").text('0.00');
+
+                                    $("table[id*=GVLedger] tbody>tr:nth-child(2)").find('[type=text][id*="txtDrAmt"]').attr("disabled", "disabled");
+                                    $("table[id*=GVLedger] tbody>tr:nth-child(3)").find('[type=text][id*="txtCrAmt"]').attr("disabled", "disabled");
+                                }
+                                else {
+                                    $("table[id*=GVLedger] tbody>tr:nth-child(2)").find('[type=text][id*="txtDrAmt"]').attr("disabled", "");
+                                    $("table[id*=GVLedger] tbody>tr:nth-child(3)").find('[type=text][id*="txtCrAmt"]').attr("disabled", "");
+                                }
+                            }
+                        },
+                        error: function (result) {
+                            alert("Error");
+                        }
+                    });
+                }
+            }
+
+
+
+            // --- Added By : Sunil Kumar Singh -- Dated: 18/02/2014
+            // --- Convert into Indian Currency (i.e. 22,22,244.00)
+            function myCurrency(nos) {
+                var x = nos;
+                x = x.toString();
+                var afterPoint = '';
+                if (x.indexOf('.') > 0)
+                    afterPoint = x.substring(x.indexOf('.'), x.length);
+                x = Math.floor(x);
+                x = x.toString();
+                var lastThree = x.substring(x.length - 3);
+                var otherNumbers = x.substring(0, x.length - 3);
+                if (otherNumbers != '')
+                    lastThree = ',' + lastThree;
+                var res = otherNumbers.replace(/\B(?=(\d{2})+(?!\d))/g, ",") + lastThree + afterPoint;
+                return res;
+            }
+
+
+            //---------End Modfied By Kathera on 16/09/2013 (Binding Sequence Changed)--------------------------//
+
+
+            $('#divcolose').live("click", function () {
+                $('#divopnbal').delay(300).slideUp(500);
+                $(this).hide();
+            });
+
+            // --- Remove Cash & Bank Account Ledger From Drop-Down Box
+            $("table[id*=GVLedger] tr").each(function (e) {
+                $(this).find("select[id*=ddlAccountName] option").each(function (i, e) {
+                    // For SGX
+                    if ($('#<%=hiddComp.ClientID%>').val() == 'CO00000001') {
+                        if ($(this).val() == "44" || $(this).val() == "45") {
+                            $(this).remove();
+                        }
+                    }
+                });
+            });
+
+            // - Changes in Below Line - By Sunil Kumar Singh Date:20-02-2014
+            $("table[id*=GVLedger] input[id*='txtdrcr']").keydown(function (event) {
+                if (String.fromCharCode(event.keyCode) == "C") {
+
+                    $(this).val("Cr");
+                    $(this).closest("tr").find('[type=text][id*="txtDrAmt"]').attr("disabled", "disabled");
+                    $(this).closest("tr").find('[type=text][id*="txtCrAmt"]').attr("disabled", "");
+                    $(this).closest("tr").find('[type=text][id*="txtDrAmt"]').val("0.00");
+
+
+                    //alert($('#<%=hiddComp.ClientID%>').val());
+                    // For SGX Company
+                    if ($('#<%=hiddComp.ClientID%>').val() == 'CO00000001') {
+
+                        if ($('#<%=rblPayTo.ClientID %> option:selected').val() == "V") {
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").empty();
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("0").html("Select Ledger Name"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("390").html("Vendor/Supplier Advance"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("394").html("Vendor/Supplier On Account"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("395").html("Plant Vendor On Account"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("487").html("Discount Received"));
+                        }
+
+                        if ($('#<%=rblPayTo.ClientID %> option:selected').val() == "E") {
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").empty();
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("0").html("Select Ledger Name"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("393").html("Employee On Account"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("406").html("Employee Travelling Advance"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("407").html("Employee Salary Advance"));
+                        }
+
+                        if ($('#<%=rblPayTo.ClientID %> option:selected').val() == "C") {
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").empty();
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("0").html("Select Ledger Name"));
+                            $(this).closest("tr").find("select[id*=ddlAccountName]").append($('<option></option>').val("478").html("Customer On Account"));
+                        }
+                    }
+
+                }
+
+                if (String.fromCharCode(event.keyCode) == "D") {
+
+                    $(this).val("Dr");
+                    $(this).closest("tr").find('[type=text][id*="txtDrAmt"]').attr("disabled", "");
+                    $(this).closest("tr").find('[type=text][id*="txtCrAmt"]').val("0.00");
+                    $(this).closest("tr").find('[type=text][id*="txtCrAmt"]').attr("disabled", "disabled");
+
+                    $(this).closest("tr").find("select[id*=ddlAccountName]").empty();
+
+                    var LedgerItems = "";
+
+                    $('#ddlHiddAccountName').children('option').map(function (i, e) {
+                        LedgerItems += "<option value='" + e.value + "'>" + e.innerText + "</option>";
+                    });
+                    $(this).closest("tr").find("select[id*=ddlAccountName]").html(LedgerItems);
+                }
+            });
+
+            // Add Rows
+            $("#imgAdd").click(function () {
+                var totalRows = $("table[id*='GVLedger'] tr").length;
+                if ($("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find("select[id*=ddlAccountName]").val() > 0) {
+                    $("table[id*=GVLedger] tbody>tr:nth-child(2)").clone(true).insertAfter("table[id*=GVLedger] tbody > tr:nth-child(" + parseInt(totalRows - 2) + ")");
+                }
+                else {
+                    alert("Please Select Ledger Account No.");
+                    $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 2) + ")").find("select[id*=ddlAccountName]").focus();
+                }
+                $("#GVLedger tbody>tr:nth-child(" + parseInt(totalRows - 1) + ")").find("input[id*='txtDrAmt'],input[id*='txtCrAmt']").val("0.00");
+            });
+
+            // Remove Rows
+            $("#imgRemove").click(function () {
+                if ($("table[id*=GVLedger] tr").length > 4) {
+                    $(this).closest("tr").css("background-color", "Orange");
+                    $(this).closest("tr").fadeOut(500, function () {
+                        $(this).closest("tr").remove();
+                    });
+                    $("#GVLedger input[type=text]").keyup();
+                }
+            });
+
+
+            $("#GVLedger input[type=text]").bind('keyup blur', function () {
+
+                var totalRows = $("table[id*='GVLedger'] tr").length;
+                var dr = 0;
+                var lid = 0;
+                var acclid = 0;
+
+                //------Vendor Amt Declaration--//
+                var vendrAmt = 0;
+                vendrAmt = $('#<%=hdnVendrAmt.ClientID %>').val();
+                var sum = 0;
+                var bc = $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 1) + ")").find("[type=text][id*=txtCrAmt]").val();
+
+                if (bc == "") {
+                    bc = "0";
+                }
+
+                $("span[id*='lblCr']").text(parseFloat(bc).toFixed(2)); // addded by devendra kumar dated:11-03-2014
+
+                $("table[id*=GVLedger] tr").each(function () {
+                    if ($(this).find("input[id*='txtDrAmt']").size() > 0) {
+
+                        dr = dr + parseFloat($(this).find("input[id*='txtDrAmt']").val());
+
+                        //------Start Vendor Amt Checking--//
+                        //-- Checking Enter Amount Should be less than Equal to Vendor Payment Amount - Only for Vendor Payment Case 
+                        if ($("select[id*=rblPayTo]").val() == "V") {
+                            if (parseFloat(vendrAmt, 2) > 0 && vendrAmt != null) {
+                                if (parseFloat(dr, 2) > parseFloat(vendrAmt, 2)) {
+                                    sum = vendrAmt;
+                                }
+                                else {
+                                    sum = dr;
+                                }
+                            }
+                            else {
+                                sum = dr;
+                            }
+                            //------End Vendor Amt Checking--//
+                        }
+                    }
+                    else {
+                        sum = dr;
+                    }
+                });
+
+
+                //------Start Dr Amt Checking--//
+                if (parseFloat(dr, 2) > parseFloat(vendrAmt, 2)) {
+                    if ($("select[id*=rblPayTo]").val() == "V") {
+                        $(this).closest("tr").find("input[id*='txtDrAmt']").val(vendrAmt);
+                    }
+                }
+                //------End Dr Amt Checking--//
+
+                if (isNaN(sum)) {
+                    sum = "0";
+                }
+
+                // For SGX
+                if ($('#<%=hiddComp.ClientID%>').val() == 'CO00000001') {
+                    if ($("select[id*=rblPayTo]").val() == "V") {
+
+                        lid = "394";        // Vendor/Supplier On Account
+                        acclid = "390";     // Vendor/Supplier Adv
+                        acclid_1 = "395";   // Plant Vendor On Account
+                    }
+                    if ($("select[id*=rblPayTo]").val() == "E") {
+                        lid = "393";        // Employee On Account
+                        acclid = "406";     // Employee Travelling Adv.
+                        acclid_1 = "407";   // Employee Salary Adv.
+                    }
+                    if ($("select[id*=rblPayTo]").val() == "C") {
+                        lid = "478";        // Customer On Account
+                    }
+                }
+
+                //---For All Case: Sum of Dr Amt--//
+
+                $("span[id*='lblDr']").text(parseFloat(sum).toFixed(2));
+
+                //---For All Case: Sum of Cr Amt--//
+                var dr1 = 0;
+                var dr2 = 0;
+                var dr3 = 0;
+                var dr4 = 0;
+                $("table[id*=GVLedger] tr").each(function () {
+                    if ($(this).find("input[id*='txtCrAmt']").size() > 0) {
+                        // -- Sum of Cr Amt
+                        dr1 = dr1 + parseFloat($(this).find("input[id*='txtCrAmt']").val());
+
+                        if ($(this).closest("tr").find("select[id*=ddlAccountName]").val() == lid) {
+                            // -- Sum of Cr Amt - For On Account / Advance Ledger Head
+                            dr2 += parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                            // -- Checking the Balance of On Account / Advance Amt
+                            if (parseFloat($("#hiddmax").val()) < parseFloat(dr2)) {
+                                dr2 -= parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                                var r = confirm("On Account Balance is " + parseFloat($("#hiddmax").val() - dr2) + ", Are You Adjust Whole Amount?");
+                                if (r == true) {
+                                    $(this).find("input[id*='txtCrAmt']").val(parseFloat($("#hiddmax").val() - dr2))
+                                }
+                                else {
+                                    $(this).find("input[id*='txtCrAmt']").val(0.00);
+                                }
+                            }
+                        }
+
+                        if ($(this).closest("tr").find("select[id*=ddlAccountName]").val() == acclid) {
+                            dr3 += parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                            if (parseFloat($("#hiddaccmax").val()) < parseFloat(dr3)) {
+                                dr3 -= parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                                var r = confirm("Advance Balance is " + parseFloat($("#hiddaccmax").val() - dr3) + ", Are You Adjust Whole Amount?");
+                                if (r == true) {
+                                    $(this).find("input[id*='txtCrAmt']").val(parseFloat($("#hiddaccmax").val() - dr3))
+                                }
+                                else {
+                                    $(this).find("input[id*='txtCrAmt']").val(0.00);
+                                }
+                            }
+                        }
+
+                        if ($(this).closest("tr").find("select[id*=ddlAccountName]").val() == acclid_1) {
+                            dr4 += parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                            if (parseFloat($("#hiddaccmax").val()) < parseFloat(dr4)) {
+                                dr4 -= parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                                var r = confirm("Advance Balance is " + parseFloat($("#hiddaccmax").val() - dr4) + ", Are You Adjust Whole Amount?");
+                                if (r == true) {
+                                    $(this).find("input[id*='txtCrAmt']").val(parseFloat($("#hiddaccmax").val() - dr4))
+                                }
+                                else {
+                                    $(this).find("input[id*='txtCrAmt']").val(0.00);
+                                }
+                            }
+                        }
+
+                        if (isNaN($(this).find("input[id*='txtCrAmt']").val())) {
+                            $(this).find("input[id*='txtCrAmt']").val(0.00);
+                        }
+                    }
+                });
+
+                if (isNaN(dr1)) {
+
+                    dr1 = "0";
+                }
+
+                $("span[id*='lblCr']").text(dr1);
+
+                var last = parseFloat($("span[id*='lblCr']").text() - bc);
+
+                $("table[id*=GVLedger] tbody>tr:nth-child(" + parseInt(totalRows - 1) + ")").find("[type=text][id*=txtCrAmt]").val($("span[id*='lblDr']").text() - last);
+
+            });
+
+            $("#<%=btnSubmit.ClientID%>").click(function () {
+                var dr = 0; var cr = 0;
+                $("table[id*=GVLedger] tr").each(function (e) {
+                    if ($(this).find("select[id*='ddlAccountName']").length) {
+                        if ($(this).find("select[id*='ddlAccountName']").val() == 0) {
+                            alert("Invalid Entry...");
+                            $(this).focus();
+                            e.preventDefault(); e.stopImmediatePropagation();
+                        }
+                        else {
+                            dr += parseFloat($(this).find("input[id*='txtDrAmt']").val());
+                            cr += parseFloat($(this).find("input[id*='txtCrAmt']").val());
+                        }
+                    }
+                });
+
+                if (parseFloat(dr).toFixed(2) == parseFloat(cr).toFixed(2)) {
+                    var JSONObject = new Array();
+                    $.map($("table[id*=GVLedger] tr"), function (item, index) {
+                        if ($(item).find("input[type=text]").length > 0) {
+                            JSONObject[index] = new Object();
+                            JSONObject[index].type = $(item).find("input[type=text][id*=txtdrcr]").val();
+                            JSONObject[index].ledger = $(item).find("select[id*=ddlAccountName]").val();
+                            JSONObject[index].ledgerName = $(item).find("select[id*=ddlAccountName] option:selected").text();
+                            JSONObject[index].dramt = $(item).find("input[type=text][id*=txtDrAmt]").val();
+                            JSONObject[index].cramt = $(item).find("input[type=text][id*=txtCrAmt]").val();
+                            JSONObject[index].costcat = $(item).find("select[id*=ddlCostCategory]").val();
+                            JSONObject[index].costcenter = $(item).find("select[id*=ddlFolioName]").val();
+                            JSONObject[index].OtherLimitAllow = $(item).find("[type=hidden][id*=hdnOtherLimitAllow]").val();  // Added by Devendra Dated:21-01-2016                           
+                        }
+                    });
+                    $.ajax({
+                        type: "POST",
+                        url: location.pathname + "/DisplayClassRoom",
+                        data: JSON.stringify({ classroom: JSONObject }),
+                        contentType: "application/json; charset=utf-8",
+                        datatype: "json",
+                        async: false,
+                        success: function (response) { success(eval(response.d)); },
+                        error: function (response) { }
+                    });
+                }
+                else {
+                    alert("Debit Amount Must be Equal to Credit Amount");
+                    return false;
+                }
+
+            });
+
+
+            $('#GVLedger select[id*=ddlAccountName]').change(function () {
+
+                var hdn = $(this).closest("tr").find('[type=hidden][id*="hdnOtherLimitAllow"]');
+                // This used for Other Voucher Allow greater than 500.
+                // Added by Devendra Kumar Datetd : 21-01-2016
+                if ($('#<%=rblPayTo.ClientID %> option:selected').val() == "O" && $(this).val() != '0') {
+                    $.ajax({
+                        type: "POST",
+                        url: location.pathname + "/LedgerOtherLimitAllow",
+                        data: "{'lid':'" + $(this).val() + "'}",
+                        contentType: "application/json; charset=utf-8",
+                        datatype: "json",
+                        success: function (data) {
+                            hdn.val(data.d);
+                        },
+                        error: function (response) { alert(response.status); }
+                    });
+                }
+
+
+                if ($(this).closest("tr").find('[type=text][id*="txtdrcr"]').val() == 'Cr') {
+                    // Calyx
+                    $("table[id*=gvDetails] tr:gt(0)").remove();
+                    if ($('#<%=hiddComp.ClientID%>').val() == 'CO00000001') {
+
+                        if ($(this).val() == '394' || $(this).val() == '393' || $(this).val() == '478' || $(this).val() == '390' || $(this).val() == '406' || $(this).val() == '407') {
+                            var hiddLid_1 = $(this).val();
+                            $('#divopnbal').hide();
+                            if ($("#hiddaccmax").val() == '')
+                                $("#hiddaccmax").val(0);
+                            if ($("#hiddmax").val() == '')
+                                $("#hiddmax").val(0);
+
+                            var str = null;
+                            $.ajax({
+                                type: "POST",
+                                contentType: "application/json; charset=utf-8",
+                                url: "../OpenningBalance.asmx/AdvancedLegder_Dtls",
+                                data: "{'ptype': '" + $("select[id*=rblPayTo]").val() + "','folio':'" + $("select[id*=ddlFavolur]").val() + "','Transdt':'" + $("span[id*='lblTransactionDate']").text() + "'}",
+
+                                dataType: "json",
+                                success: function (data) {
+                                    if (data.d.length > 0) {
+                                        $("#gvDetails").append("<tr style='font-size:12px;font-weight:bold;color:Blue'><td colspan='7'>List of Advanced for : <u>" + $("#ddlFavolur option:selected").text() + "</u></td></tr>");
+                                        for (var i = 0; i < data.d.length; i++) {
+
+                                            $("#gvDetails").append("<tr style='width:80%;font-size:14px; text-align:center; padding-top:2px; padding-bottom:2px;'><td><span id='slno'>" + (i + 1) + "</span></td><td><span id='spanjno'>" + data.d[i].Jno + "</span><input id='hiddjid' type='hidden' value=" + data.d[i].jid + " /> </td><td><span id='spanJDate'>" + data.d[i].JDate + "</span> <input id='hiddJDate' type='hidden' value=" + data.d[i].JDate + " /></td> <td>" + data.d[i].JFolioNo + "</td><td width='100px' align='right'><span id='JAmt'>" + data.d[i].Amt + "</span></td><td width='100px' align='right'><input id='eJAmt' name='eJAmt' style='text-align:right;width:100px;font-size:14px;font-weight:bold'  type='text' value='" + data.d[i].Amt + "' disabled/></td><td><input id='imgcheck' name='imgcheck' type='checkbox'/><input id='hiddlid' type='hidden' value=" + hiddLid_1 + " /></td></tr>");
+                                        }
+                                        $("#gvDetails").append("<tr style='font-size:13px;font-weight:bold;color:#8A0A0A;background-color:#E8EEE3;'><td colspan='4' align='right'>Total Payment</td><td  align='right'><span id='txtacttot'></span></td><td  align='right'><span id='txtnewtot'></span></td><td></td></tr>");
+                                        $("#gvDetails").append("<tr><td colspan='7' align='center'> <input id='btnok' type='button' value='Pay Advanced' class='Submit'/>&nbsp;&nbsp;<input id='btncan' type='button' value='Close' class='Submit'/></td></tr>");
+                                        $("#divjournaL").delay(300).slideDown(500).html($("#gvDetails").show());
+                                        $("#hiddAdvance").val('Advance');
+                                    }
+
+                                },
+                                error: function (result) {
+                                    alert("Error");
+                                }
+                            });
+                            //                            $.ajax({
+                            //                                type: "POST",
+                            //                                url: "../OpenningBalance.asmx/Vendor_OnAcc",
+                            //                                data: "{'Vendor':'" + $("select[id*=ddlFavolur]").val() + "','ptype':'" + $("select[id*=rblPayTo]").val() + "','TransDt':'" + $("span[id*='lblTransactionDate']").text() + "'}",
+                            //                                contentType: "application/json; charset=utf-8",
+                            //                                datatype: "json",
+                            //                                success: function (data) {
+                            //                                    if (data.d.length > 0) {
+
+                            //                                        str = "<span style='font-weight:bold; font-size: 20px;'>" + $("#ddlFavolur option:selected").text() + "</span><img id='divcolose' src='../../images/POPClose.ico' />";
+                            //                                        for (var i = 0; i < data.d.length; i++) {
+                            //                                            str += "<br/><span>" + data.d[i].JName + " : <span style='font-weight:bold; font-size: 18px;'><span class='WebRupee'>Rs.</span> " + data.d[i].Amt + "</span>";
+                            //                                            if (data.d[i].JAcccode == "394") {
+                            //                                                $("#hiddmax").val(data.d[i].Amt);
+                            //                                            }
+                            //                                            else {
+                            //                                                $("#hiddaccmax").val(data.d[i].Amt);
+                            //                                            }
+                            //                                        }
+                            //                                        str += "</span>";
+                            //                                        $("#divopnbal").delay(300).slideDown(500).html(str);
+                            //                                    }
+                            //                                    success(eval(response.d));
+                            //                                },
+                            //                                error: function (response) { }
+                            //                            });
+                        }
+                    }
+                }
+            });
+            $("#lblAmtInWord").text(amtInWords($("#hdnDAmt").val()));
+
+            $("#btnVoucherList").click(function () {
+                $('#iframe_id').attr("src", "../View_Print/VoucherPrint.aspx?v=&t=&b=").show();
+                $('#divvendor').fadeIn(1000);
+                $('#divMain').css('opacity', '0.2');
+                $('#<%=GVList.ClientID %>').show();
+
+
+            });
+            $('#close').click(function () {
+                $('#divvendor').fadeOut(1000);
+                $('#divMain').css('opacity', '1.0');
+            });
+
+            $('#<%=GVList.ClientID%> [id*=imgPrint]').click(function () {
+                var voucherNo = $(this).closest('tr').find('[id*=hiddID]').val();
+                var purpose = 'General Voucher';
+                var branch = $('[id$=lblBrCode]').text();
+                $('#iframe_id').show();
+                $('#iframe_id').attr("src", "../View_Print/VoucherPrint.aspx?v=" + voucherNo + '&t=' + purpose + '&b=' + branch);
+                $('#<%=GVList.ClientID %>').hide();
+                $('#imgBack').show();
+            });
+
+            $('#imgBack').click(function () {
+                $('#iframe_id').hide();
+                $('#imgBack').hide();
+                $('#<%=GVList.ClientID %>').show();
+            });
+
+            $('#btnPrint').click(function () {
+                $('#ErrorContainer').hide();
+                $('#ErrorContainer').attr('class', 'EmptyError');
+                var voucherNo = $('[id*=lblID]').text();
+                var purpose = 'General Voucher';
+                var branch = $('[id$=lblBrCode]').text();
+                $('#iframe_id').attr("src", "../View_Print/VoucherPrint.aspx?v=" + voucherNo + '&t=' + purpose + '&b=' + branch);
+                $('#iframe_id').show();
+                $('#divvendor').fadeIn(1000);
+                $('#<%=GVList.ClientID %>').hide();
+                //$('#imgBack').show();
+
+            });
+        });
+
+        
+    </script>
+    <div id="divopnbal">
+    </div>
+    <div id="divjournaL" class="SlideBox">
+        <asp:GridView ID="gvDetails" runat="server" Style="display: none" Width="100%" Font-Names="Verdana"
+            CssClass="grid-view_1" EnableTheming="True">
+            <HeaderStyle CssClass="header_1" />
+            <RowStyle CssClass="normal_1" />
+            <FooterStyle CssClass="header_1" />
+            <AlternatingRowStyle CssClass="alternaterow" />
+        </asp:GridView>
+    </div>
+    <asp:ScriptManager ID="scriptManager1" runat="server" />
+    <asp:Panel ID="ErrorContainer" runat="server" CssClass="EmptyErrorFin">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>
+                    <asp:Label ID="lblErrorTitle" runat="server" CssClass="ErrorTitle" Text=""></asp:Label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <div>
+                        <asp:Label ID="MyMessage" runat="server" Font-Size="10pt"></asp:Label><br />
+                        <asp:Label ID="lblID" runat="server" Font-Bold="True" Font-Size="20" ForeColor="#006600"
+                            Visible="false"></asp:Label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td align="center">
+                    <input id="btnclose" type="button" value="Close" onclick="javascript:$('#ErrorContainer').hide();javascript:$('#ErrorContainer').attr('class', 'EmptyError');" />
+                    <input id="btnPrint" type="button" value="Print" />
+                </td>
+            </tr>
+        </table>
+    </asp:Panel>
+    <div style="height: 400px">
+        <table width="100%" border="0" cellpadding="0" cellspacing="5">
+            <tr style="display: none;">
+                <td class="FA_Left">
+                    Company Name
+                </td>
+                <td class="FA_Left">
+                    <asp:Label ID="lblCompCode" runat="server" Text="" ForeColor="Brown" Visible="false"></asp:Label>
+                </td>
+                <td class="FA_Left">
+                    Branch
+                </td>
+                <td class="FA_Left">
+                    <asp:Label ID="lblBrCode" runat="server" Text="" ForeColor="Brown" Style="display: none"></asp:Label>
+                </td>
+                <td class="FA_Left">
+                    Transaction Date
+                </td>
+                <td class="FA_Left">
+                    <asp:Label ID="lblTransactionDate" runat="server" Text="" ForeColor="Brown"></asp:Label>
+                </td>
+            </tr>
+            <tr>
+                <td class="FA_Left">
+                    Transaction Type
+                </td>
+                <td class="FA_Left">
+                    <asp:Label ID="lblTransactionType" runat="server" Text="" ForeColor="Brown"></asp:Label>
+                </td>
+                <td class="FA_Left">
+                    Pay To
+                </td>
+                <td class="FA_Left">
+                    <asp:DropDownList ID="rblPayTo" runat="server" CssClass="ddlNormal">
+                    </asp:DropDownList>
+                    <sgg:CascadingDropDown ID="rblPayTo_CascadingDropDown" runat="server" Category="PayTo"
+                        ServiceMethod="BindPayTo" ServicePath="~/CascadingDropdown.asmx" Enabled="True"
+                        TargetControlID="rblPayTo">
+                    </sgg:CascadingDropDown>
+                    <asp:RequiredFieldValidator ID="RequiredFieldValidator1" runat="server" ValidationGroup="VGA"
+                        ErrorMessage="Select Pay To" ControlToValidate="rblPayTo" ToolTip="Select Pay To."
+                        InitialValue="0">*</asp:RequiredFieldValidator>
+                </td>
+                <td class="FA_Left">
+                    In Favour Of
+                </td>
+                <td class="FA_Left" colspan="2">
+                    <asp:DropDownList ID="ddlFavolur" runat="server" CssClass="ddlNormal">
+                    </asp:DropDownList>
+                    <sgg:CascadingDropDown ID="ddlFavolur_CascadingDropDown" runat="server" Category="Favour"
+                        Enabled="True" TargetControlID="ddlFavolur" ParentControlID="rblPayTo" UseContextKey="true"
+                        ServiceMethod="BindFavourList" ServicePath="~/CascadingDropdown.asmx">
+                    </sgg:CascadingDropDown>
+                    <asp:RequiredFieldValidator ID="Required_Flavor" runat="server" ValidationGroup="VGA"
+                        ErrorMessage="Select In Favour Of." ControlToValidate="ddlFavolur" ToolTip="Select In Favour Of."
+                        InitialValue="0">*</asp:RequiredFieldValidator>
+                    <asp:TextBox ID="txtFlavor" runat="server" CssClass="txtNormal" Style="display: none"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="Required_Flavor1" runat="server" ValidationGroup="VGA"
+                        Style="display: none" ErrorMessage="Enter In Favolur Of." ControlToValidate="txtFlavor"
+                        ToolTip="Enter in Favolur Of.">*</asp:RequiredFieldValidator>
+                    <asp:HiddenField ID="hiddvno" runat="server" />
+                </td>
+            </tr>
+            <tr>
+                <td colspan="6">
+                    <table width="100%">
+                        <tr>
+                            <td class="con_header" width="20%">
+                                Voucher Details
+                            </td>
+                            <td colspan="5" align="left">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">
+                                <asp:GridView ID="GVLedger" Width="100%" runat="server" AutoGenerateColumns="False"
+                                    CellPadding="4" CellSpacing="0" EmptyDataText="Record Not Found" ShowFooter="true"
+                                    CssClass="grid-view_1" EnableTheming="True">
+                                    <HeaderStyle CssClass="header_1" />
+                                    <RowStyle CssClass="normal_1" />
+                                    <FooterStyle CssClass="header_1" />
+                                    <AlternatingRowStyle CssClass="alternaterow" />
+                                    <Columns>
+                                        <asp:TemplateField HeaderText="Dr/Cr">
+                                            <ItemStyle VerticalAlign="Middle" HorizontalAlign="Center" />
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="txtdrcr" runat="server" Text="Dr" BorderStyle="Solid" BorderWidth="1"
+                                                    BorderColor="#CCCCCC" Width="30px" onkeydown="return NoTypeOption(event)" Font-Bold="True"
+                                                    MaxLength="2" Style="text-align: center"></asp:TextBox>
+                                                <asp:Label ID="lblsrno" runat="server" Text='<%#Eval("srNo") %>' Visible="false"></asp:Label>
+                                            </ItemTemplate>
+                                            <FooterStyle HorizontalAlign="Center" VerticalAlign="Middle" />
+                                            <FooterTemplate>
+                                                <img id="imgAdd" alt="" src="../../images/add_Row.png" />
+                                            </FooterTemplate>
+                                            <ItemStyle Width="5%" />
+                                            <FooterStyle HorizontalAlign="Center" />
+                                        </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Ledger Account Name">
+                                            <ItemTemplate>
+                                                <asp:DropDownList ID="ddlAccountName" runat="server" CssClass="ddlNormal" Width="98%">
+                                                </asp:DropDownList>
+                                                <sgg:CascadingDropDown ID="ddlAccountName_CascadingDropDown" runat="server" Category="ddlAccountName"
+                                                    ServiceMethod="BindAccountDetails" ServicePath="~/CascadingDropdown.asmx" ParentControlID="rblPayTo"
+                                                    UseContextKey="true" Enabled="True" TargetControlID="ddlAccountName">
+                                                </sgg:CascadingDropDown>
+                                                <asp:HiddenField ID="hdnOtherLimitAllow" runat="server" />
+                                            </ItemTemplate>
+                                            <ItemStyle Width="35%" />
+                                            <FooterStyle HorizontalAlign="Right" />
+                                            <FooterTemplate>
+                                                <asp:Label ID="lbl1" runat="server" Text="Grand Total"></asp:Label>
+                                            </FooterTemplate>
+                                        </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Dr Amount">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="txtDrAmt" runat="server" CssClass="FA_txtCurrency" Width="98%" Text="0.00"
+                                                    MaxLength="10"></asp:TextBox>
+                                            </ItemTemplate>
+                                            <FooterStyle HorizontalAlign="Right" />
+                                            <FooterTemplate>
+                                                <asp:Label ID="lblDr" runat="server" Text="0.00"></asp:Label>
+                                            </FooterTemplate>
+                                            <ItemStyle Width="10%" />
+                                        </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Cr Amount">
+                                            <ItemTemplate>
+                                                <asp:TextBox ID="txtCrAmt" runat="server" CssClass="FA_txtCurrency" Enabled="false"
+                                                    Text="0.00" Width="98%" MaxLength="20"></asp:TextBox>
+                                            </ItemTemplate>
+                                            <ItemStyle Width="10%" />
+                                            <FooterStyle HorizontalAlign="Right" />
+                                            <FooterTemplate>
+                                                <asp:Label ID="lblCr" runat="server" Text="0.00"></asp:Label>
+                                            </FooterTemplate>
+                                        </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Cost Category">
+                                            <ItemTemplate>
+                                                <asp:DropDownList ID="ddlCostCategory" runat="server" CssClass="ddlNormal" Width="98%">
+                                                </asp:DropDownList>
+                                            </ItemTemplate>
+                                            <ItemStyle Width="15%" />
+                                        </asp:TemplateField>
+                                        <asp:TemplateField HeaderText="Cost Center">
+                                            <ItemTemplate>
+                                                <asp:DropDownList ID="ddlFolioName" runat="server" CssClass="ddlNormal" Width="98%">
+                                                </asp:DropDownList>
+                                            </ItemTemplate>
+                                            <ItemStyle Width="15%" />
+                                        </asp:TemplateField>
+                                        <asp:TemplateField>
+                                            <HeaderStyle HorizontalAlign="Center" VerticalAlign="Middle" />
+                                            <ItemStyle HorizontalAlign="Center" VerticalAlign="Middle" />
+                                            <ItemTemplate>
+                                                <img id="imgRemove" alt="" src="../../images/delete.png" />
+                                            </ItemTemplate>
+                                            <ItemStyle Width="5%" />
+                                        </asp:TemplateField>
+                                    </Columns>
+                                </asp:GridView>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="6">
+                                <hr />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="FA_Left">
+                                Descripton
+                            </td>
+                            <td class="FA_Left" colspan="6">
+                                <asp:TextBox ID="txtNarration" runat="server" CssClass="FA_txtLongNormal" MaxLength="200"
+                                    TextMode="MultiLine" Style="height: 50px; width: 99.30%"></asp:TextBox>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator3" ControlToValidate="txtNarration"
+                                    runat="server" ErrorMessage="Enter Narration" ToolTip="Enter Narration" ValidationGroup="VGA"
+                                    Display="Dynamic">*</asp:RequiredFieldValidator>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="FA_Left">
+                                Ref Doc No
+                            </td>
+                            <td class="FA_Left">
+                                <asp:TextBox ID="txtDocRefNo" runat="server" CssClass="txtNormal"></asp:TextBox>
+                                <%--<asp:RequiredFieldValidator ID="RequiredFieldValidator4" ControlToValidate="txtDocRefNo"
+                        runat="server" ErrorMessage="Enter  Ref Doc No" ToolTip="Enter  Ref Doc No" ValidationGroup="VGA">*</asp:RequiredFieldValidator>--%>
+                            </td>
+                            <td class="FA_Left">
+                                Supporting Doc (If Any)
+                            </td>
+                            <td class="FA_Left">
+                                <asp:FileUpload ID="FileUpload1" runat="server" />
+                            </td>
+                            <td class="FA_Left" align="right">
+                                Pay Period
+                            </td>
+                            <td class="FA_Left" style="text-align: right">
+                                <asp:TextBox ID="txtPayFrom" runat="server" CssClass="FA_txtDate" MaxLength="10"
+                                    Style="width: 40%; max-width: 100%;"></asp:TextBox>
+                                <sgg:MaskedEditExtender ID="MaskedEditExtender1" runat="server" Enabled="True" Mask="99/99/9999"
+                                    MaskType="Date" TargetControlID="txtPayFrom">
+                                </sgg:MaskedEditExtender>
+                                <sgg:CalendarExtender ID="CalendarExtender1" runat="server" Enabled="True" Format="dd/MM/yyyy"
+                                    PopupPosition="BottomLeft" TargetControlID="txtPayFrom">
+                                </sgg:CalendarExtender>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator5" runat="server" ValidationGroup="VGA"
+                                    ErrorMessage="Select Pay Period From." ControlToValidate="txtPayFrom" ToolTip="Select Pay Period From."
+                                    Display="Dynamic" Enabled="false">*</asp:RequiredFieldValidator>
+                                <asp:RegularExpressionValidator ID="RegularExpressionValidator1" runat="server" ControlToValidate="txtPayFrom"
+                                    ValidationGroup="VGA" ErrorMessage="Enter Pay Period From in (DD/MM/YYYY) Format."
+                                    SetFocusOnError="True" ToolTip="Enter Pay Period From in (DD/MM/YYYY) Format."
+                                    ValidationExpression="^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$"
+                                    Display="Dynamic"> 
+                            *</asp:RegularExpressionValidator>
+                                <asp:TextBox ID="txtPayTo" runat="server" CssClass="FA_txtDate" MaxLength="10" Style="width: 40%;
+                                    max-width: 100%;"></asp:TextBox>
+                                <sgg:MaskedEditExtender ID="MaskedEditExtender2" runat="server" Enabled="True" Mask="99/99/9999"
+                                    MaskType="Date" TargetControlID="txtPayTo">
+                                </sgg:MaskedEditExtender>
+                                <sgg:CalendarExtender ID="CalendarExtender2" runat="server" Enabled="True" Format="dd/MM/yyyy"
+                                    PopupPosition="BottomLeft" TargetControlID="txtPayTo">
+                                </sgg:CalendarExtender>
+                                <asp:RequiredFieldValidator ID="RequiredFieldValidator6" runat="server" ValidationGroup="VGA"
+                                    ErrorMessage="Select Pay Period To." ControlToValidate="txtPayTo" ToolTip="Select Pay Period To."
+                                    Display="Dynamic" Enabled="false">*</asp:RequiredFieldValidator>
+                                <asp:RegularExpressionValidator ID="RegularExpressionValidator2" runat="server" ControlToValidate="txtPayTo"
+                                    ValidationGroup="VGA" ErrorMessage="Enter Pay Period To in (DD/MM/YYYY) Format."
+                                    SetFocusOnError="True" ToolTip="Enter Pay Period To in (DD/MM/YYYY) Format."
+                                    ValidationExpression="^(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d$"
+                                    Display="Dynamic">*</asp:RegularExpressionValidator>
+                            </td>
+                        </tr>
+
+                <tr>
+                 <td class="FA_Left" style="width: 5%">
+                 Vertical Name
+                 </td>
+                 <td class="FA_Left" style="width:10%">
+                 <asp:DropDownList ID="ddlVerticalName" runat="server" CssClass="ddlNormal">
+                    </asp:DropDownList>
+                    <asp:RequiredFieldValidator ID="RFVddlVerticalName" runat="server" ControlToValidate="ddlVerticalName"
+                        ErrorMessage="Select Vertical." ValidationGroup="VGA" InitialValue="0" ToolTip="Select Vertical."
+                    >*</asp:RequiredFieldValidator>
+                </td>
+                <td class="FA_Left"  style="width: 5%">
+                 Project Name
+                 </td>
+                 <td class="FA_Left" style="width:10%">
+                 <asp:DropDownList ID="ddlProjectName" runat="server" CssClass="ddlNormal">
+                    </asp:DropDownList>
+                    <asp:RequiredFieldValidator ID="RFVddlProjectName" runat="server" ControlToValidate="ddlProjectName"
+                        ErrorMessage="Select  Project." ValidationGroup="VGA" InitialValue="0" ToolTip="Select  Project."
+                       >*</asp:RequiredFieldValidator>
+                </td>
+                 <td class="FA_Left" style="width: 5%">
+                 Cost Code
+                 </td>
+                 <td class="FA_Left" style="width:10%">
+                 <asp:DropDownList ID="ddlCostCode" runat="server" CssClass="ddlNormal">
+                    </asp:DropDownList>
+                    <asp:RequiredFieldValidator ID="RFVddlCostCode" runat="server" ControlToValidate="ddlCostCode"
+                        ErrorMessage="Select CostCode." ValidationGroup="VGA" InitialValue="0" ToolTip="Select Costcode."
+                       >*</asp:RequiredFieldValidator>
+                 
+                </td>
+                </tr>
+
+                        <tr>
+                            <td align="center" colspan="6">
+                                <asp:Button ID="btnSubmit" runat="server" Text="Generate Voucher" CssClass="Submit"
+                                    ValidationGroup="VGA" OnClick="btnSubmit_Click" />
+                                <asp:ValidationSummary ID="ValidationSummary1" ValidationGroup="VGA" ShowMessageBox="true"
+                                    ShowSummary="false" runat="server" />
+                                <asp:HiddenField ID="hiddmax" runat="server" />
+                                <asp:HiddenField ID="hiddaccmax" runat="server" />
+                                <asp:HiddenField ID="hdnVendrAmt" Value="" runat="server" />
+                                <asp:HiddenField ID="hiddJouVoucherNo" Value="" runat="server" />
+                                <asp:HiddenField ID="hiddJouVendAmt" Value="" runat="server" />
+                                <asp:HiddenField ID="hiddJid" Value="" runat="server" />
+                                <asp:HiddenField ID="hiddLid_1" Value="" runat="server" />
+                                <asp:HiddenField ID="hiddComp" Value="" runat="server" />
+                                <asp:DropDownList ID="ddlHiddAccountName" runat="server" Style="display: none">
+                                </asp:DropDownList>
+                                <input type="button" value="View & Print Voucher" id="btnVoucherList" class="Submit" />
+                                <asp:HiddenField ID="hiddAdvance" Value="" runat="server" />
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <div id="divvendor" style="overflow: auto; width: 90%; height: 450px; top: 1px;">
+            <div>
+                View Voucher Details <span id="close">X</span>
+                <img id="imgBack" src="../../images/imgClose.png" style="float: right; padding-right: 20px;
+                    width: 70px; top: -3px; display: none; position: relative;" />
+                <br />
+                <br />
+                <asp:GridView ID="GVList" runat="server" ShowFooter="false" AutoGenerateColumns="False"
+                    AllowPaging="false" CellSpacing="0" EmptyDataText="Record Not Found" CssClass="grid-view_1"
+                    EnableTheming="True" Width="97%">
+                    <HeaderStyle CssClass="header_1" />
+                    <RowStyle CssClass="normal_1" HorizontalAlign="Center" />
+                    <AlternatingRowStyle CssClass="alternaterow" HorizontalAlign="Center" />
+                    <Columns>
+                        <asp:TemplateField HeaderText="Sr No" HeaderStyle-HorizontalAlign="Center">
+                            <ItemTemplate>
+                                <%#Container.DataItemIndex+1 %>
+                                <asp:HiddenField runat="server" ID="hiddID" Value='<%# Eval("VoucharNo") %>'></asp:HiddenField>
+                            </ItemTemplate>
+                            <HeaderStyle HorizontalAlign="Center"></HeaderStyle>
+                            <ItemStyle Width="5%" HorizontalAlign="Center" />
+                        </asp:TemplateField>
+                        <asp:BoundField DataField="TransactionDate" HeaderText="Transaction Date" HeaderStyle-Width="10%" />
+                        <asp:BoundField DataField="VoucharNo" HeaderText="Voucher No." HeaderStyle-Width="10%" />
+                        <asp:BoundField DataField="InFavour" HeaderText="Paid To" HeaderStyle-Width="30%"
+                            ItemStyle-HorizontalAlign="Left" />
+                        <asp:BoundField DataField="Amount" HeaderText="Amount" HeaderStyle-Width="10%" ItemStyle-HorizontalAlign="Right" />
+                        <asp:BoundField DataField="Remarks" HeaderText="Remarks" HeaderStyle-Width="30%"
+                            ItemStyle-HorizontalAlign="Left" />
+                        <asp:TemplateField HeaderText="Print">
+                            <ItemTemplate>
+                                <img id="imgPrint" runat="server" src="~/images/print.png" style="cursor: pointer" />
+                            </ItemTemplate>
+                            <ItemStyle HorizontalAlign="Center" Width="5%" />
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+            </div>
+            <iframe id="iframe_id" width="100%" height="399px;" style="border-style: none; display: none;"
+                marginwidth="0px" marginheight="0px" src="../View_Print/VoucherPrint.aspx?v=&t=&b=">
+            </iframe>
+        </div>
+        <asp:HiddenField ID="hdnDAmt" runat="server" />
+    </div>
+    </form>
+</body>
+</html>
+
+_____________________________________________GeneralVoucher_Payable.aspx.cs__________________________________________
+
+using System;
+using System.Collections;
+using System.Configuration;
+using System.Data;
+using System.Linq;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Xml.Linq;
+using System.Web.Script.Serialization;
+using System.Web.Services;
+using System.Collections.Generic;
+using System.Web.Script.Services;
+using Newtonsoft.Json;
+using System.IO;
+using System.Text;
+using System.Runtime.Serialization.Json;
+using System.ComponentModel;
+using AjaxControlToolkit;
+
+public partial class GeneralVoucher_Payable : System.Web.UI.Page
+{
+    BAL_CommonMaster common = new BAL_CommonMaster();
+    BAL_FA_VoucherPayment pay = new BAL_FA_VoucherPayment();
+    BAL_FA_Ledger_mst ledger = new BAL_FA_Ledger_mst();
+    BAL_FA_CostCategory_mst category = new BAL_FA_CostCategory_mst();
+    DALSGXMIS_BillingMIS_V2 customer = new DALSGXMIS_BillingMIS_V2();
+    BALSGX_VendorMaster vendor = new BALSGX_VendorMaster();
+    BAL_Employee employee = new BAL_Employee();
+    BAL_EmployeeLevelAccess access = new BAL_EmployeeLevelAccess();
+    Message msg = new Message();
+    FillTreeControl objtree = new FillTreeControl();
+    public DataTable dtstatic = null;
+    BAL_FA_FinanceVoucharList VoucharList = new BAL_FA_FinanceVoucharList();
+    
+    
+    protected void Page_Init(object sender, EventArgs e)
+    {
+        if (Request.UrlReferrer == null)
+        {
+            Response.Redirect("~/login.aspx");
+        }
+        else if (Session["Employee_Code"] == null | Session["EmpName"] == null)
+        {
+            Response.Redirect("~/login.aspx");
+        }      
+      else
+        {
+            string str = System.IO.Path.GetFileName(HttpContext.Current.Request.FilePath).ToString();
+            DataTable dtEmployeeAccessRight = objtree.CheckEmployeeAccessRight(Session["Employee_Code"].ToString(), str);
+            if (dtEmployeeAccessRight.Rows.Count == 0)
+            {
+                // Response.Redirect(Session["URLName"].ToString());
+            }
+            if (dtEmployeeAccessRight.Rows.Count > 0)
+            {
+                Session["nodevalue"] = dtEmployeeAccessRight.Rows[0][1].ToString();
+            }
+        } 
+
+    }
+
+   
+
+    [WebMethod(EnableSession = true)]
+    [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+    public static new DataTable DisplayClassRoom(List<Contact> classroom)
+    {
+        PropertyDescriptorCollection properties = TypeDescriptor.GetProperties(typeof(Contact));
+        DataTable table = new DataTable();
+
+        foreach (PropertyDescriptor prop in properties)
+            table.Columns.Add(prop.Name, Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType);
+
+        foreach (Contact item in classroom)
+        {
+            DataRow row = table.NewRow();
+            foreach (PropertyDescriptor prop in properties)
+                row[prop.Name] = prop.GetValue(item) ?? DBNull.Value;
+
+            table.Rows.Add(row);
+        }
+        HttpContext.Current.Session["dtstatic"] = table;
+        return table;
+
+    } 
+
+    protected void Page_Load(object sender, EventArgs e)
+    {
+        if (!IsPostBack)
+        {
+            Fill_Verticalname(ddlVerticalName);
+            Fill_Projectname();
+            Fill_CostCode();
+
+            lblTransactionDate.Text = Request.QueryString["tdate"].ToString();
+            hiddComp.Value = Request.QueryString["comp"].ToString();
+            lblCompCode.Text = Request.QueryString["comp"].ToString();
+            lblBrCode.Text = Request.QueryString["banch"].ToString();
+            lblTransactionType.Text = "Payable";
+          
+             _dtGVStock("1");
+            BindColumnToGridview();
+           ddlFavolur_CascadingDropDown.ContextKey = lblCompCode.Text + "," + lblBrCode.Text + "," + Session["Employee_Code"].ToString() + "," + Request.QueryString["tdate"].ToString();
+
+            Session["update"] = Server.UrlEncode(System.DateTime.Now.ToString());
+            ErrorContainer.Visible = false;
+            Fill_VoucherList();
+        }
+    }
+
+    private void Fill_VoucherList()
+    {
+        DataTable dt = VoucharList.SelectAllVoucharList(lblTransactionDate.Text, lblTransactionDate.Text);
+        if (dt.Rows.Count > 0)
+        { 
+            DataView dv = dt.DefaultView;
+            string RowFltr = "";
+
+            if (Session["Employee_Code"].ToString() != "SGX0005" && Session["Employee_Code"].ToString() != "CAL0000")
+                RowFltr = "addBy='" + Session["Employee_Code"].ToString() + "' and ";
+
+            dv.RowFilter = RowFltr + "LogStatus='N' and Pupose='General Voucher'";
+          
+            GVList.DataSource = dv;
+            GVList.DataBind();
+        }
+    }
+
+    void Page_PreRender(object obj, EventArgs e)
+    {
+        ViewState["update"] = Session["update"];
+    }
+
+    private void BindColumnToGridview()
+    {
+        DataTable dt = new DataTable();
+        dt.Columns.Add("Sl.No");
+        dt.Columns.Add("Voucher No");
+        dt.Columns.Add("Voucher Date");
+        dt.Columns.Add("Ledger Name");
+        dt.Columns.Add("Amount (Rs)");
+        dt.Columns.Add("Pay Amount (Rs)");
+        dt.Columns.Add("Select");
+        dt.Rows.Add();
+        gvDetails.DataSource = dt;
+        gvDetails.DataBind();
+        gvDetails.Rows[0].Visible = false;
+    }
+
+    private void _dtGVStock(string paymode)
+    {
+        DataTable dt = new DataTable();
+        dt.Columns.Add(new DataColumn("srNo", typeof(int)));
+        dt.Columns.Add(new DataColumn("vTrans", typeof(string)));
+        dt.Columns.Add(new DataColumn("lid", typeof(string)));
+        dt.Columns.Add(new DataColumn("vAmt", typeof(string)));
+        dt.Columns.Add(new DataColumn("ccid", typeof(string)));
+        dt.Columns.Add(new DataColumn("lgLinkDoc", typeof(string)));
+
+        dt.Rows.Add(new object[] { 1, "0", "0", "0", "0", 0 });
+        dt.Rows.Add(new object[] { 2, "0", "0", "0", "0", 0 });
+
+        GVLedger.DataSource = dt;
+        GVLedger.DataBind();
+
+        for (int i = 0; i < GVLedger.Rows.Count; i++)
+        {
+            //DropDownList ddlAccountName = (DropDownList)gv.FindControl("ddlAccountName");
+            //Fill_AccountName(ddlAccountName);
+            if (i < GVLedger.Rows.Count - 1)
+            {
+                CascadingDropDown ddlAccountName_CascadingDropDown = (CascadingDropDown)GVLedger.Rows[i].FindControl("ddlAccountName_CascadingDropDown");
+                ddlAccountName_CascadingDropDown.ContextKey = lblCompCode.Text;
+            }
+            else
+            {
+                CascadingDropDown ddlAccountName_CascadingDropDown = (CascadingDropDown)GVLedger.Rows[i].FindControl("ddlAccountName_CascadingDropDown");
+                ddlAccountName_CascadingDropDown.Enabled = false;
+            }
+
+            DropDownList ddlCostCategory = (DropDownList)GVLedger.Rows[i].FindControl("ddlCostCategory");
+            Fill_CostCategory(ddlCostCategory);
+            DropDownList ddlFolioName = (DropDownList)GVLedger.Rows[i].FindControl("ddlFolioName");
+            Fill_FolioName(ddlFolioName);
+        }
+    }
+
+    private void Fill_CostCategory(DropDownList ddl)
+    {
+        ddl.Items.Clear();
+        DataTable dt = category.Select_CostCategory_Mst();
+        if (dt.Rows.Count > 0)
+        {
+            ddl.DataSource = dt;
+            ddl.DataTextField = "ccName";
+            ddl.DataValueField = "ccid";
+            ddl.DataBind();
+            ddl.Items.Insert(0, new ListItem("Select Cost Category", "0"));
+        }
+        else
+            ddl.Items.Insert(0, new ListItem("Select Cost Category", "0"));
+    }
+    private void Fill_FolioName(DropDownList ddl)
+    {
+        ddl.Items.Clear();
+        DataTable dt = ledger.FA_Details_ListofLedger(0);
+        DataView dv = dt.DefaultView;
+        dv.RowFilter = " Comp_Code='" + lblCompCode.Text + "' AND Branch_Code='" + lblBrCode.Text + "'";
+        if (dt.Rows.Count > 0)
+        {
+            ddl.DataSource = dt;
+            ddl.DataTextField = "LinkDoc";
+            ddl.DataValueField = "lgLinkDoc";
+            ddl.DataBind();
+            ddl.Items.Insert(0, new ListItem("Select Folio Name", "0"));
+        }
+        else
+            ddl.Items.Insert(0, new ListItem("Select Folio Name", "0"));
+    }
+
+    private void Fill_Customer(DropDownList ddl)
+    {
+        ddl.Items.Clear();
+        DataTable dt = customer.fillCustomer("0", Session["Employee_Code"].ToString());
+        if (dt.Rows.Count > 0)
+        {
+            ddl.DataSource = dt;
+            ddl.DataTextField = "custName";
+            ddl.DataValueField = "custCode";
+            ddl.DataBind();
+            ddl.Items.Insert(0, new ListItem("Select One", "0"));
+        }
+        else
+            ddl.Items.Insert(0, new ListItem("Select One", "0"));
+    }
+    private void Fill_Vendor(DropDownList ddl)
+    {
+        ddl.Items.Clear();
+        DataTable dt = vendor.FillVendor("0", Session["Employee_Code"].ToString());
+        if (dt.Rows.Count > 0)
+        {
+            ddl.DataSource = dt;
+            ddl.DataTextField = "VendorName";
+            ddl.DataValueField = "VendorCode";
+            ddl.DataBind();
+            ddl.Items.Insert(0, new ListItem("Select One", "0"));
+        }
+        else
+            ddl.Items.Insert(0, new ListItem("Select One", "0"));
+    }
+    private void Fill_Employee(DropDownList ddl)
+    {
+        ddl.Items.Clear();
+        DataTable dt = employee.LoadEmployeeNames();
+        DataView dv = (DataView)dt.DefaultView;
+
+        dv.RowFilter = "Comp_Code ='" + lblCompCode.Text + "'";
+        if (dt.Rows.Count > 0)
+        {
+            ddl.DataSource = dt;
+            ddl.DataTextField = "FirstName";
+            ddl.DataValueField = "Employee_Code";
+            ddl.DataBind();
+            ddl.Items.Insert(0, new ListItem("Select One", "0"));
+        }
+        else
+            ddl.Items.Insert(0, new ListItem("Select One", "0"));
+    }
+
+    public new class Contact
+    {
+        public string type { get; set; }
+        public string ledger { get; set; }
+        public double dramt { get; set; }
+        public double cramt { get; set; }
+        public string ccat { get; set; }
+        public string costcenter { get; set; }
+        public string ledgerName { get; set; }
+        public string OtherLimitAllow { get; set; }
+    }
+
+    protected void btnSubmit_Click(object sender, EventArgs e)
+    {
+        lblID.Text = "";
+
+        if (rblPayTo.SelectedValue != "O")
+            txtFlavor.Text = ddlFavolur.SelectedItem.ToString();
+
+        byte[] imageSize = null;
+        if (FileUpload1.PostedFile.ContentLength <= 500000)
+        {
+            imageSize = new byte[FileUpload1.PostedFile.ContentLength];
+            HttpPostedFile uploadedImage = FileUpload1.PostedFile;
+            uploadedImage.InputStream.Read(imageSize, 0, Convert.ToInt32(FileUpload1.PostedFile.ContentLength));
+        }
+        dtstatic = (DataTable)HttpContext.Current.Session["dtstatic"];
+        if (dtstatic != null)
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add(new DataColumn("Jid", typeof(string)));
+            dt.Columns.Add(new DataColumn("PerJno", typeof(string)));
+            dt.Columns.Add(new DataColumn("PayAmt", typeof(double)));
+            DataRow dr = null;
+
+            string[] voucher = hiddJouVoucherNo.Value.Split(',');
+            string[] vendamt = hiddJouVendAmt.Value.Split(',');
+            string[] vendjid = hiddJid.Value.Split(',');
+
+            for (int i = 0; i < voucher.Length; i++)
+            {
+                if (voucher[i] != "" && vendamt[i] != "")
+                {
+                    dr = dt.NewRow();
+                    dr["Jid"] = vendjid[i];
+                    dr["PerJno"] = voucher[i];
+                    dr["PayAmt"] = Convert.ToDouble(vendamt[i] == "" ? "0" : vendamt[i]);
+                    dt.Rows.Add(dr);
+                }
+            }
+            
+            string result = "0";
+            double dramt = Math.Round( Convert.ToDouble(dtstatic.Compute("sum(dramt)", "type='Dr'")),2,MidpointRounding.AwayFromZero);
+            double cramt = Math.Round(Convert.ToDouble(dtstatic.Compute("sum(cramt)", "type='Cr'")), 2, MidpointRounding.AwayFromZero);
+            
+            // Other Voucher should not be greater than Rs. 500.
+            // Dated 16-01-2016 by ref of Rajib Ghosh and Sunil Sir.
+            if (rblPayTo.SelectedValue == "O" && cramt > 1000 && dtstatic.Rows.Count > 1)   
+            {
+                DataView dv = dtstatic.DefaultView;
+                dv.RowFilter = "OtherLimitAllow = 'Y' and type = 'Dr' ";   // allow for above 500 in other voucher
+                DataTable dt_l = dv.ToTable();
+
+                if (dt_l.Rows.Count > 0)
+                {
+
+                }
+                else
+                {
+                    ErrorContainer.Visible = true;
+                    lblID.Text = "";
+                    msg.ShowMessageFin("Pay to other voucher should not be greater than Rs. 1000 ", null, ErrorContainer, MyMessage, "Warning", lblErrorTitle);
+                    return;
+                }
+            }
+
+
+            //string result = "";
+            //if (Session["update"].ToString() == ViewState["update"].ToString())
+            //{
+            //    result = Conveyance.Insert_FA_LocalConveyanceSheet(Session["Employee_Code"].ToString(), hdndate.Value, rblRequestFor.SelectedValue, empcode, Convert.ToDecimal(ddlVerticalName.SelectedValue), Convert.ToDecimal(ddlProjectName.SelectedValue),
+            //        Convert.ToDecimal(ddlCostCode.SelectedValue), txtBusinessPurpose.Text, Convert.ToDouble(lblTotalAmount.Text), hfTotal.Value, hdnbcode.Value, hdnccode.Value, Session["Employee_Code"].ToString(), dt);
+
+            //}
+
+
+
+
+            if ( dramt == cramt && dramt > 0 && cramt > 0)
+            {
+                if (Session["update"].ToString() == ViewState["update"].ToString())
+                {
+                    result = pay.Insert_FA_ManualPaymentEntry(lblCompCode.Text, lblBrCode.Text, lblTransactionDate.Text, lblTransactionType.Text, txtNarration.Text, txtDocRefNo.Text, txtPayFrom.Text, txtPayTo.Text, imageSize, Convert.ToDecimal(ddlVerticalName.SelectedValue), Convert.ToDecimal(ddlProjectName.SelectedValue),
+                    Convert.ToDecimal(ddlCostCode.SelectedValue), Session["Employee_Code"].ToString(), "", txtFlavor.Text, rblPayTo.SelectedValue, ddlFavolur.SelectedValue, hiddvno.Value, dtstatic, dt, dramt,hiddAdvance.Value);
+                    if (result != "0")
+                    {
+                        Session["update"] = Server.UrlEncode(System.DateTime.Now.ToString());
+                        hdnVendrAmt.Value = "";
+                        ErrorContainer.Visible = true;
+                        lblID.Visible = true;
+                        lblID.Text = result; 
+                        Session.Remove("dtstatic");
+                        msg.ShowMessageFin("General Voucher Sucessfully Genereted !!!", null, ErrorContainer, MyMessage, "Success",lblErrorTitle);
+
+                    }
+                    else
+                    {
+                        ErrorContainer.Visible = true;
+                        lblID.Text = "";
+                        msg.ShowMessageFin("Warning:Same Transaction being Repeated!!!", null, ErrorContainer, MyMessage, "Warning", lblErrorTitle);
+                        return;
+                    }
+                }
+            }
+            else
+            {
+                msg.ShowMessageFin("Debit amount must be equal top Credit amount : Enter Value Greater than Zero in Dr & Cr", null, ErrorContainer, MyMessage, "Warning", lblErrorTitle);
+                return;
+            }
+
+        }
+        else
+        {
+            ErrorContainer.Visible = true;
+            lblID.Text = "";
+            msg.ShowMessageFin("Warning:Please Select Ledger Account Name and Enter Narration !!!", null, ErrorContainer, MyMessage, "Warning", lblErrorTitle);
+            return;
+        }
+
+        clear();
+    }
+
+    private void clear()
+    {
+        txtPayTo.Text = string.Empty;
+        txtPayFrom.Text = string.Empty;
+        txtNarration.Text = string.Empty;
+        txtDocRefNo.Text = string.Empty;
+        txtFlavor.Text = string.Empty;
+        rblPayTo.ClearSelection();
+        ddlFavolur.ClearSelection();
+        ddlFavolur_CascadingDropDown.ContextKey = lblCompCode.Text + "," + lblBrCode.Text + "," + Session["Employee_Code"].ToString() + "," + lblTransactionDate.Text;
+        Session.Remove("dtstatic");
+        _dtGVStock("1");
+        BindColumnToGridview();
+
+    }
+
+    [WebMethod(EnableSession = true)]
+    [ScriptMethod(ResponseFormat = ResponseFormat.Json)]
+    public static string LedgerOtherLimitAllow(string lid)
+    {
+        BAL_FA_Ledger_mst ledger = new BAL_FA_Ledger_mst();
+        try
+        {
+            return ledger.SelectLedger_OtherLimitAllow(lid);
+
+        }
+        catch (Exception ex)
+        {
+            return "0";
+        }
+    }
+
+
+
+    private void Fill_Verticalname(DropDownList DDL)
+    {
+        DataTable dt1 = common.Select_Vertical_Mst();
+
+        if (dt1.Rows.Count > 0)
+        {
+            DDL.DataSource = dt1;
+            DDL.DataTextField = "v_name";
+            DDL.DataValueField = "v_id";
+            DDL.DataBind();
+            DDL.Items.Insert(0, new ListItem("Select Vertical", "0"));
+        }
+        else
+        {
+            DDL.Items.Insert(0, new ListItem("Select Vertical", "0"));
+        }
+    }
+
+    private void Fill_Projectname()
+    {
+        DataTable dt1 = common.Select_Project_Mst();
+
+        if (dt1.Rows.Count > 0)
+        {
+            ddlProjectName.DataSource = dt1;
+            ddlProjectName.DataTextField = "p_name";
+            ddlProjectName.DataValueField = "p_id";
+            ddlProjectName.DataBind();
+            ddlProjectName.Items.Insert(0, new ListItem("Select Project", "0"));
+        }
+        else
+        {
+            ddlProjectName.Items.Insert(0, new ListItem("Select Project", "0"));
+        }
+    }
+
+    private void Fill_CostCode()
+    {
+        DataTable dt1 = common.Select_CostCode_Mst();
+
+        if (dt1.Rows.Count > 0)
+        {
+            ddlCostCode.DataSource = dt1;
+            ddlCostCode.DataTextField = "cc_name";
+            ddlCostCode.DataValueField = "cc_id";
+            ddlCostCode.DataBind();
+            ddlCostCode.Items.Insert(0, new ListItem("Select CostCode", "0"));
+        }
+        else
+        {
+            ddlProjectName.Items.Insert(0, new ListItem("Select CostCode", "0"));
+        }
+    }
+
+
+}
+
+__________________________________________BAL_FA_VoucherPayable.cs_____________________________________________
+
+using System;
+using System.Data;
+using System.Configuration;
+using System.Linq;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Xml.Linq;
+
+/// <summary>
+/// Summary description for BAL_FA_VoucherPayment
+/// </summary>
+public class BAL_FA_VoucherPayment
+{
+	public BAL_FA_VoucherPayment()
+	{
+		//
+		// TODO: Add constructor logic here
+		//
+	}
+    public string Insert_FA_Staffwelfare(string company, string branch, string tdate, string ttype, string remarks, string refdocno, string fromdt, string todt, string acc, string amt, string ccode, string ccategory, string AddBy, string purpose, string payto, string paytocode, string payinFev)
+    {
+        DAL_FA_VoucherPayment Voucher = new DAL_FA_VoucherPayment();
+        try
+        {
+            return Voucher.Insert_FA_Staffwelfare(company, branch, tdate, ttype, remarks, refdocno, fromdt, todt, acc, amt, ccode, ccategory, AddBy, purpose, payto, paytocode,  payinFev);
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            Voucher = null;
+        }
+      
+    }
+    public string Insert_FA_ManualPaymentEntry(string company, string branch, string tdate, string ttype, string remarks, string refdocno, string fromdt, string todt, byte[] BillCopy, decimal v_id, decimal p_id, decimal cc_id, string AddBy, string purpose, string payto, string paytocode, string payinFev, string JVNo, DataTable dt, DataTable dt1, double dramt, string AdvanceStatus)
+    {  
+        DAL_FA_VoucherPayment Voucher = new DAL_FA_VoucherPayment();
+        try
+        {
+            //, string AdvanceStatus added by Ashok 05-10-2015
+            return Voucher.Insert_FA_ManualPaymentEntry(company, branch, tdate, ttype, remarks, refdocno, fromdt, todt, BillCopy, v_id, p_id, cc_id, AddBy, purpose, payto, paytocode, payinFev, JVNo, dt, dt1, dramt, AdvanceStatus);
+        }
+        catch
+        {
+            throw;
+        }
+        finally
+        {
+            Voucher = null;
+        }
+    }
+}
+
+____________________________________________DAL_FA_VoucherPayable.cs___________________________________________
+
+
+using System;
+using System.Data;
+using System.Configuration;
+using System.Linq;
+using System.Web;
+using System.Web.Security;
+using System.Web.UI;
+using System.Web.UI.HtmlControls;
+using System.Web.UI.WebControls;
+using System.Web.UI.WebControls.WebParts;
+using System.Xml.Linq;
+using System.Data.SqlClient;
+
+/// <summary>
+/// Summary description for DAL_FA_VoucherPayment
+/// </summary>
+public class DAL_FA_VoucherPayment
+{
+    string connStr = ConfigurationManager.ConnectionStrings["DBConnCAL"].ToString();
+    SqlTransaction mytrans = null;
+	public DAL_FA_VoucherPayment()
+	{
+		//
+		// TODO: Add constructor logic here
+		//
+	}
+    public string Insert_FA_Staffwelfare(string company, string branch, string tdate, string ttype, string remarks, string refdocno, string fromdt, string todt, string acc, string amt, string ccode, string ccategory, string AddBy, string purpose, string payto, string paytocode, string payinFev)    
+    {
+        SqlConnection conn = new SqlConnection(connStr);
+        conn.Open();
+        mytrans = conn.BeginTransaction();
+
+        SqlCommand dCmd1 = null;
+
+        try
+        {
+            dCmd1 = new SqlCommand("usp_FA_Insert_Staffwelfare", conn);
+            dCmd1.CommandType = CommandType.StoredProcedure;
+            dCmd1.Transaction = mytrans;
+
+
+            SqlParameter sqlp1 = new SqlParameter();
+
+            sqlp1 = dCmd1.Parameters.Add("@VoucherCode", SqlDbType.VarChar, 25);
+            sqlp1.Direction = ParameterDirection.Output;
+
+            dCmd1.Parameters.AddWithValue("@CompanyCode", company);
+            dCmd1.Parameters.AddWithValue("@Branch_Code", branch);
+            dCmd1.Parameters.AddWithValue("@TransactionDt", tdate);
+            dCmd1.Parameters.AddWithValue("@TransactioonType", ttype);
+            dCmd1.Parameters.AddWithValue("@Remarks", remarks);
+            dCmd1.Parameters.AddWithValue("@lid", Convert.ToDecimal(acc));
+            dCmd1.Parameters.AddWithValue("@Amount", Convert.ToDecimal(amt));
+            dCmd1.Parameters.AddWithValue("@costCatid", ccode =="" ? 0 : Convert.ToDouble(ccode) );
+            dCmd1.Parameters.AddWithValue("@costcenterId", ccategory == "" ? 0 : Convert.ToDouble(ccategory));
+
+            dCmd1.Parameters.AddWithValue("@purpose", purpose);
+            dCmd1.Parameters.AddWithValue("@payto", payto);
+            dCmd1.Parameters.AddWithValue("@paytocode", paytocode);
+            dCmd1.Parameters.AddWithValue("@RefDocNo", refdocno);
+            dCmd1.Parameters.AddWithValue("@PayPeriodFrom", fromdt);
+            dCmd1.Parameters.AddWithValue("@PayperiodTo", todt);
+            dCmd1.Parameters.AddWithValue("@AddBy", AddBy);
+            dCmd1.Parameters.AddWithValue("@payinFev", payinFev);
+
+            dCmd1.ExecuteNonQuery();
+            string _ID = (string)dCmd1.Parameters["@VoucherCode"].Value.ToString().Trim();
+            if(_ID!="0")
+                mytrans.Commit();
+            else
+                mytrans.Rollback();
+            return _ID;
+        }
+        catch
+        {
+            mytrans.Rollback();
+            throw;
+        }
+        finally
+        {
+            dCmd1.Dispose();
+            conn.Close();
+            conn.Dispose();
+        }
+    }
+    public string Insert_FA_ManualPaymentEntry(string company, string branch, string tdate, string ttype, string remarks, string refdocno, string fromdt,
+        string todt, byte[] BillCopy, decimal v_id, decimal p_id, decimal cc_id, string AddBy, string purpose, string payto, string paytocode, string payinFev, string JVNo, DataTable dt, DataTable dt1, double dramt, string AdvanceStatus)
+    {
+        SqlConnection conn = new SqlConnection(connStr);
+        conn.Open();
+        mytrans = conn.BeginTransaction();
+        SqlCommand dCmd1 = null;
+
+        try
+        {
+            dt.Rows[0].Delete(); // for first row blank
+           
+            dCmd1 = new SqlCommand("usp_FA_Insert_GeneralPayable_Hdr", conn); //usp_FA_Insert_PaymentEnrty
+            dCmd1.CommandType = CommandType.StoredProcedure;
+            dCmd1.Transaction = mytrans;
+
+            SqlParameter sqlp1 = new SqlParameter();
+            sqlp1 = dCmd1.Parameters.Add("@gpayId", SqlDbType.Decimal,18);
+            sqlp1.Direction = ParameterDirection.Output;
+
+            SqlParameter sqlp2 = new SqlParameter();
+            sqlp2 = dCmd1.Parameters.Add("@gpayCode", SqlDbType.VarChar, 25);
+            sqlp2.Direction = ParameterDirection.Output;
+
+            dCmd1.Parameters.AddWithValue("@CompanyCode", company);
+            dCmd1.Parameters.AddWithValue("@Branch_Code", branch);
+            dCmd1.Parameters.AddWithValue("@TransactionDt", tdate);
+            dCmd1.Parameters.AddWithValue("@TransactionType", ttype);
+            dCmd1.Parameters.AddWithValue("@Remarks", remarks);
+            dCmd1.Parameters.AddWithValue("@lid", Convert.ToDecimal(dt.Rows[0]["ledger"]));
+            dCmd1.Parameters.AddWithValue("@JVNo", JVNo);
+            dCmd1.Parameters.AddWithValue("@Amount", dramt);
+            dCmd1.Parameters.AddWithValue("@costCatid", dt.Rows[0]["ccat"].ToString() == "" ? 0.00 : Convert.ToDouble(dt.Rows[0]["ccat"]));
+            dCmd1.Parameters.AddWithValue("@costcenterId", dt.Rows[0]["costcenter"].ToString() == "" ? 0.00 : Convert.ToDouble(dt.Rows[0]["costcenter"]));
+
+            dCmd1.Parameters.AddWithValue("@purpose", "");  // this is Maintain in Sql Side 
+            dCmd1.Parameters.AddWithValue("@payto", payto);
+            dCmd1.Parameters.AddWithValue("@paytocode", paytocode); 
+            dCmd1.Parameters.AddWithValue("@payinFev", payinFev);
+            dCmd1.Parameters.AddWithValue("@RefDocNo", refdocno);
+            dCmd1.Parameters.AddWithValue("@PayPeriodFrom", fromdt);
+            dCmd1.Parameters.AddWithValue("@PayperiodTo", todt);
+            dCmd1.Parameters.AddWithValue("@BillCopy", BillCopy);
+            dCmd1.Parameters.AddWithValue("@v_id", v_id);
+            dCmd1.Parameters.AddWithValue("@p_id", p_id);
+            dCmd1.Parameters.AddWithValue("@cc_id", cc_id);
+            dCmd1.Parameters.AddWithValue("@AddBy", AddBy);
+
+            dCmd1.ExecuteNonQuery();
+
+            decimal _ID = (decimal)dCmd1.Parameters["@gpayId"].Value;
+            string _Code = (string)dCmd1.Parameters["@gpayCode"].Value.ToString().Trim();
+            if (_Code != "0")
+            {
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    dCmd1 = new SqlCommand("usp_FA_Insert_GeneralPayable_Dtls", conn);  // usp_FA_tbl_PaymentManualDetails
+                    dCmd1.CommandType = CommandType.StoredProcedure;
+                    dCmd1.Transaction = mytrans;
+
+                    dCmd1.Parameters.AddWithValue("@gpayId", _ID);
+                    dCmd1.Parameters.AddWithValue("@gpayCode", _Code);
+                    dCmd1.Parameters.AddWithValue("@acccode", Convert.ToInt32(dt.Rows[i]["ledger"]));
+                    dCmd1.Parameters.AddWithValue("@transcode", dt.Rows[i]["type"]);
+                    if (Convert.ToDouble(dt.Rows[i]["dramt"]) >0)
+                        dCmd1.Parameters.AddWithValue("@amt", Convert.ToDecimal(dt.Rows[i]["dramt"]));
+                    else
+                        dCmd1.Parameters.AddWithValue("@amt", Convert.ToDecimal(dt.Rows[i]["cramt"]));
+                    dCmd1.Parameters.AddWithValue("@jCostCat", dt.Rows[i]["ccat"].ToString() == "" ? 0 : Convert.ToDouble(dt.Rows[i]["ccat"]));
+                    dCmd1.Parameters.AddWithValue("@jCostCenter", dt.Rows[i]["costcenter"].ToString() == "" ? 0.00 : Convert.ToDouble(dt.Rows[i]["costcenter"]));
+                    dCmd1.ExecuteNonQuery();
+                }
+                //--------Added By Kathera on 17/09/2013------------------//
+                if (dt1.Rows.Count > 0)
+                {
+                    if (AdvanceStatus != "")
+                    {
+                        for (int i = 0; i < dt1.Rows.Count; i++)
+                        {
+                            dCmd1 = new SqlCommand("usp_FA_insert_Advanced_PayRelation", conn);
+                            dCmd1.CommandType = CommandType.StoredProcedure;
+                            dCmd1.Transaction = mytrans;
+
+                            dCmd1.Parameters.AddWithValue("@Jno", dt1.Rows[i]["PerJno"]);
+                            dCmd1.Parameters.AddWithValue("@FolioNo", payinFev);
+                            dCmd1.Parameters.AddWithValue("@PayAmt", dt1.Rows[i]["PayAmt"]);
+                            dCmd1.Parameters.AddWithValue("@PayCode", _Code);
+
+                            dCmd1.ExecuteNonQuery();
+                        }
+                    }
+                    else
+                    {
+                        for (int i = 0; i < dt1.Rows.Count; i++)
+                        {
+                            dCmd1 = new SqlCommand("usp_FA_insert_JV_PayRelation", conn);  // usp_FA_insert_JV_PayRelation
+                            dCmd1.CommandType = CommandType.StoredProcedure;
+                            dCmd1.Transaction = mytrans;
+
+                            dCmd1.Parameters.AddWithValue("@Jid", dt1.Rows[i]["Jid"]);
+                            dCmd1.Parameters.AddWithValue("@PerJno", dt1.Rows[i]["PerJno"]);
+                            dCmd1.Parameters.AddWithValue("@PayAmt", dt1.Rows[i]["PayAmt"]);
+                            dCmd1.Parameters.AddWithValue("@gPayCode", _Code);  // Added by devendra kumar ref by sunil sir dated: 17-06-2014
+
+                            dCmd1.ExecuteNonQuery();
+                        }
+
+                    }
+                }
+                //--------Ended By Kathera on 17/09/2013------------------//
+                mytrans.Commit();
+                return _Code;
+            }
+            else
+            {
+                mytrans.Rollback();
+                return _Code;
+            }
+        }
+        catch
+        {
+            mytrans.Rollback();
+            throw;
+        }
+        finally
+        {
+            dCmd1.Dispose();
+            conn.Close();
+            conn.Dispose();
+        }
+    }
+}
+
+_______________________________________________________________________________________
