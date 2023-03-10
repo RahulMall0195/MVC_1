@@ -1,0 +1,1011 @@
+__________________________________________Party_Wise_Cheque_Collection_Details________________________________________________
+
+
+  @*Added By Rahul Mall *@
+  @model BusinessLayer.Entity.CCDReport.Rpt_Party_Wise_Cheque_Collection_Details
+  
+   @{ 
+        ViewBag.Title = "Party_Wise_Cheque_Collection_Details";
+        Layout = "~/Views/Shared/_MainDashboard.cshtml"; 
+    }
+
+<style>
+    .widget-main {
+        padding-top: 12px;
+        padding-right: 12px;
+        padding-bottom: 5px;
+        padding-left: 12px;
+    }
+</style>
+
+@Styles.Render("~/bundles/Report/CommanStyle")
+@Scripts.Render("~/bundles/Report/CommanScripts")
+
+<style>
+    @@media screen and (max-width: 600px) {
+        .input-group-addon {
+            visibility: hidden;
+            clear: both;
+            float: left;
+            display: none;
+        }
+    }
+</style>
+
+@using (Html.BeginForm("Party_Wise_Cheque_Collection_Details", "CCDReport", FormMethod.Post, new { @id = "frmPartyWise_Report" })) 
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    Html.RenderPartial("_Alerts");
+    <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <b id="alertMessage"></b>
+    </div>
+    
+    
+    
+  <div class="row">
+        <div class="col-xs-12 col-sm-4">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title">Input Parameters Box</h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+                <div class="widget-body">
+                    <div class="widget-main">
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="ddlRegion" class="lbl_9">Region</label>
+                                    @Html.DropDownListFor(x => x.R_ID, Model.R_LIST, "", new { @class = "chosen-select form-control", @id = "ddlRegion", @data_placeholder = "SELECT REGION" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <label for="ddlDivision" class="lbl_9">Division</label>
+                                    @Html.DropDownListFor(x => x.DIV_ID, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "", new { @class = "chosen-select form-control", @id = "ddlDivision", @data_placeholder = "SELECT DIVISION" })
+                                    @Html.ValidationMessageFor(x => x.DIV_ID)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="txtReportfDt" class="lbl_9">Bill From Date</label>
+                                    @Html.TextBoxFor(x => x.BILLS_F_DATE, "{0:yyyy-MM-dd}", new { @id = "txtReportfDt", @type = "date", @class = "form-control mobDate", @maxlength = "10", @Style = "padding-bottom:5px;" })
+                                    @Html.TextBoxFor(x => x.BILLS_F_DATE1, new { @id = "txtReportfDt1", @class = "form-control datepicker deskDate", @maxlength = "10", @placeholder = "dd/mm/yyyy", @autocomplete = "off", @Style = "padding-bottom:5px;", @readonly = "readonly" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <label for="txtReporttDt" class="lbl_9">Bill To Date</label>
+                                    @Html.TextBoxFor(x => x.BILLS_UPTO_DATE, "{0:yyyy-MM-dd}", new { @id = "txtReporttDt", @type = "date", @class = "form-control mobDate", @maxlength = "10", @Style = "padding-bottom:5px;" })
+                                    @Html.TextBoxFor(x => x.BILLS_UPTO_DATE1, new { @id = "txtReporttDt1", @class = "form-control datepicker deskDate", @maxlength = "10", @placeholder = "dd/mm/yyyy", @autocomplete = "off", @Style = "padding-bottom:5px;", @readonly = "readonly" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                
+                                <div class="col-xs-6">
+                                    <label for="ddlBrSelect" class="lbl_9">Branch</label>
+                                    @Html.DropDownListFor(x => x.SEARCH_BR_ID, Model.SEARCH_BR_LIST, "", new { @class = "chosen-select form-control", @id = "ddlBrSelect", @data_placeholder = "ALL BRANCH" })
+                                </div>
+                                <div style="margin-top:30px;">
+                                    <label>
+                                        <input id="chkParty" name="form-field-checkbox" type="checkbox" class="ace chkparty" />
+                                        <span class="lbl">All Parties</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>                    
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-4">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title">Branch Box</h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+                <div class="widget-body">
+                    <div id="bodyBranchList" class="widget-main" style="height: 227px; overflow-y: auto; overflow-x: hidden">
+                    </div>
+                    @Html.HiddenFor(model => model.brListData, new { id = "hdn_brListData" })
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-4">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title"><span id="widget_lbl">Party Checklist Box</span></h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+
+                <div class="widget-body">
+                    <div id="bodyPartyList" class="widget-main" style="height: 227px; overflow-y: auto; overflow-x: hidden">
+                        @*Here Party List class="form-control"*@
+                        @*<input type="text" id="txtPartList" name="party" />*@
+                    </div>
+                    @Html.HiddenFor(model => model.partyListData, new { id = "hdn_partyListData" })
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="text-align:center; padding-bottom:5px;">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <input type="button" id="btnShow" class="btn btn-success" value="Process Report" name="Save" style="width:auto;" />
+            <input type="reset" class="btn btn-default" value="Reset [Ctrl+R]" style="width:auto;" id="btnReset" />
+        </div>
+    </div>
+    <div class="row" style="text-align:center; padding-bottom:5px;">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <span id="spnError" class="field-validation-error">&nbsp;</span>
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        function init() {
+            shortcut.add("Ctrl+R", function () {
+                // Reset
+                var url = '@Url.Action("Party_Ledger_For_Bills_Outstanding", "CCDReport")';
+                window.location.href = url;
+            });
+        }
+        window.onload = init;
+
+        /*----- Chosen Select Dropdown Validation ----*/
+        var validator = $("#frmPartyWise_Report").data('validator');
+        validator.settings.ignore = ":hidden:not(select)";
+        $('.chosen-select').chosen().change(function () {
+            $(this).trigger('click');
+        });
+        /*----- Chosen Select Dropdown Validation End----*/
+
+        $('#btnShow').click(function (e) {
+            if (CheckSession(e) == 1) {
+                getReport();
+            }
+        });
+
+
+        function getReport() {
+            var rId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var ddlBrSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+            var fDate = $('#txtReportfDt1').val();
+            var eDate = $('#txtReporttDt1').val();
+            var cbsDt = $('#txtCBSDt1').val();
+            $("input[name=partyListData]").val($("#txtPartList").val());
+            var selBr = 0;
+            var brList = '0';
+            if (ddlBrSelect==1) {
+                brList = $("#hdn_brListData").val() == '' ? '0' : $("#hdn_brListData").val();
+                selBr = 1;
+            }
+            else {
+                selBr = 0;
+            }
+            var partyList = $("#txtPartList").val() == '' ? '0' : $("#txtPartList").val();
+
+ 
+
+
+            // Report Parameters
+            var paraList = new Array();
+            paraList.push(rId);
+            paraList.push(divId);
+            paraList.push(selBr);
+            paraList.push(fDate);
+            paraList.push(eDate);
+          
+
+            // End Report Parameters
+            var reportId = 'CCD000013';
+            var flag = 0;
+            if (parseInt(divId) == 0) {
+                flag = 1;
+                $('#spnError').text('Select Division.').show();
+                return false;
+            }
+
+            if (parseInt(flag) == 0) {
+                $.ajax({
+                    type: "POST",
+                    url: '../CCDReport/SetTempData',
+                    data: '{ reportId:"' + reportId + '",rptPar:"' + paraList + '",brList:"' + brList + '",partyList:"' + partyList + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "text",
+                    beforeSend: function () {
+                        $('#LoadingModalLabel').text('Please wait... We are processing your request.').show();
+                        $('#LoadingModal').modal('show');
+                    },
+                    success: function (r) {
+                        var url = '@Url.Action("ReportTemplate", "CCDReport")';
+                        window.location.href = url;
+                        $('#spnError').text('');
+                    },
+                    complete: function (json) {
+                        $("#LoadingModal").modal('hide');
+                    },
+                    error: function (result) {
+                        alert(result.status + ': ' + result.statusText);
+                    }
+                });
+            }
+        }
+
+        $("#ddlDivision").change(function (){
+            var ddlBrSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+            $('#spnError').text('');
+            var dId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+
+            if (ddlBrSelect==0) {
+                if (dId > 0) {
+                    AllAccessBranch(0);
+                }
+            }
+            else {
+                AllAccessBranch(1);
+            }
+            chkBrListData();
+        });
+
+        Division();
+
+        function Division() {
+            var regionId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            var str = '';
+            if (parseInt(regionId) > 0) {
+                $.ajax({
+                    type: "GET",
+                    url: "../Report/GetDivisionList",
+                    data: { rId: regionId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        str = '<option value=""></option>';
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                str += '<option value=' + data[i].DIV_ID + '>' + data[i].DIV_CODE + ' - ' + data[i].DIV_NAME + '</option>';
+                            }
+                            $("#ddlDivision").empty().append(str);
+                            $("#ddlDivision").trigger("chosen:updated");
+                        }
+                    }
+                });
+            }
+            else {
+                str = '<option value=""></option>';
+                $("#ddlDivision").empty().append(str);
+                $("#ddlDivision").trigger("chosen:updated");
+            }
+        }
+
+        $('#ddlRegion').on('change', function (){      
+            Division();
+            AllAccessBranch(0);
+            $('#spnError').text('').hide();
+        });
+
+        function AllAccessBranch(chkState) {
+            var body = '';
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var rId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            if (parseInt(divId) > 0) {
+                $.ajax({
+                    url: "../CCDReport/GET_ACCOUNTING_BRANCH_LIST_BY_FILTER",
+                    type: "GET",
+                    data: { R_ID: rId, DIV_ID: divId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var body = '';
+                        body += '<div id="dvBrList" class="row no-gutters" style="display:block">';
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                body += '<div class="col-xs-6 col-sm-4 col-md-4 col-lg-4 ui-checkbox">';
+                                body += '<label class="checkbox-inline" style="font-size: 10px;">';
+                                if (chkState == 1) {
+                                    body += '<input id="chkBr_' + data[i].BR_ID + '" type="checkbox" value="' + data[i].BR_ID + '" name="chkBranch" class="chkBrnachlist">' + data[i].BR_NAME;
+                                }
+                                else {
+                                    body += '<input id="chkBr_' + data[i].BR_ID + '" type="checkbox" value="' + data[i].BR_ID + '" name="chkBranch" class="chkBrnachlist" checked>' + data[i].BR_NAME;
+                                }
+                                body += '</label>';
+                                body += '</div>';
+                            }
+                            body += '</div>';
+                            $('#bodyBranchList').empty().append(body);
+                        }
+                    }
+                });
+            }
+        }
+
+        $(document).on('change', 'div.ui-checkbox', function () {
+            chkBrListData();
+        });
+
+        function chkBrListData() {
+            chkBrListVal = [];
+            $('input:checkbox.chkBrnachlist:checked').each(function () {
+                chkBrListVal.push($(this).attr('value'));
+                //if (chkBrListVal.length > 20) {
+                //    $(this).prop('checked', false);
+                //    return false;
+                //}
+            });
+            $("input[name=brListData]").val(chkBrListVal);
+        }
+
+        $('#ddlBrSelect').on('change', function () {
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            if (parseInt($(this).val()) == 0 && parseInt(divId) > 0) {
+                $(".chkBrnachlist:checkbox").prop('checked', true);
+            }
+            else {
+                $(".chkBrnachlist:checkbox").prop('checked', false);
+            }
+        });
+
+        $('#btnReset').click(function () {
+            // Reset
+            var url = '@Url.Action("Party_Wise_Cheque_Collection_Details", "CCDReport")';
+            window.location.href = url;
+        });
+
+        $(function () {
+            $('#txtReportfDt1').datepicker({
+                dateFormat: 'dd/mm/yy'
+                , changeMonth: true
+                , changeYear: true
+                , maxDate: 0
+                , onClose: function (date) {
+                    //Set Minimum Date of EndDatePicker After Selected Date of StartDatePicker
+                    $('#txtReportfDt').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+
+                    $("#txtReporttDt1").datepicker("option", "minDate", new Date(DateFormat_ddmmyyy_To_yyyymmdd(date)));
+                    document.getElementById("txtReporttDt").setAttribute("min", DateFormat_ddmmyyy_To_yyyymmdd(date));
+                    $("#txtReporttDt1").focus();
+                }
+                , onSelect: function (selectedDate) {
+                    $('#txtReportfDt').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+                }
+            });
+
+            $('#txtReporttDt1').datepicker({
+                dateFormat: 'dd/mm/yy'
+                , changeMonth: true
+                , changeYear: true
+                , maxDate: 0
+                , onClose: function (date) {
+                    //Set Minimum Date of EndDatePicker After Selected Date of StartDatePicker
+                    $('#txtReporttDt').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+                }
+                , onSelect: function (selectedDate) {
+                    $('#txtReporttDt').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+                }
+            });
+
+            $('#txtCBSDt1').datepicker({
+                dateFormat: 'dd/mm/yy'
+               , changeMonth: true
+               , changeYear: true
+               , maxDate: 0
+               , onClose: function (date) {
+                   $('#txtCBSDt').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+               }
+               , onSelect: function (selectedDate) {
+                   $('#txtCBSDt').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+               }
+            });
+        });
+
+        $("#txtPartList").val('').hide();
+
+        $(".chkparty").click(function () {
+            chkBrListData();
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var hdnBr = $("#hdn_brListData").val() == '' ? '0' : $("#hdn_brListData").val();
+            var brSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+
+            if (brSelect == '0') { }
+            else {
+                hdnBr = 0;
+            }
+
+            var url = 'Rpt_GetPartyList?rid=0&did=' + divId + '&brid=0&paid=0&hdnStn=' + hdnBr + "&term=";
+
+            if ($(this).is(':checked')) {
+                if (parseInt(divId) == 0) {
+                    $("#txtPartList").hide();
+                    $('.token-input-list').remove();
+                }
+                else {
+                    if ($(".token-input-list").length > 0) {
+                    }
+                    else {
+                        chkBrListData();
+                        $('.token-input-list').remove();
+                        $("#txtPartList").tokenInput(url, {
+                            preventDuplicates: true,
+                            minChars: 4,
+                            tokenLimit: 20,
+                            hintText: "Type Party Name",
+                            noResultsText: "No Result",
+                            queryParam: "term"
+                        });
+                    }
+                }
+            }
+            else {
+                $('.token-input-list').remove();
+            }
+        });
+    });
+
+</script>
+
+<style>
+    .chosen-container {
+        min-width: 100% !important;
+    }
+</style>
+
+
+________________________________________________________CCDReport_Controller.cs_______________________________________________________________
+
+
+using BusinessLayer;
+using BusinessLayer.DAL;
+using BusinessLayer.Entity;
+using BusinessLayer.Entity.CCDReport;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace eARC.Controllers
+{
+    //Added By - Pramesh Kumar Vishwakarma, Date:07-02-2023
+    public class CCDReportController : BaseController
+    {
+        private readonly List<ReportInfo> report = new List<ReportInfo>();
+
+        public CCDReportController()
+        {
+            report = new DAL_CCDReport().REPORT_LIST();
+        }
+
+        #region Report Common Templates
+        public ActionResult ReportTemplate()
+        {
+            ViewBag.Header = "iTMS Reports";
+            ReportInfo rptInfo = new ReportInfo();
+            try
+            {
+                if (TempData["rptInfo"] != null)
+                {
+                    rptInfo = (ReportInfo)TempData["rptInfo"];
+                    TempData.Keep("rptInfo");
+                    string rptIds = rptInfo.ReportId;
+
+                    List<ReportInfo> riList = report.Where(w => w.ReportId == rptIds).ToList();
+                    if (riList.Count() > 0)
+                    {
+                        rptInfo.SourceURL = riList[0].SourceURL;
+                        rptInfo.ReportName = riList[0].ReportName;
+                        rptInfo.ReportDescription = riList[0].ReportDescription;
+                        rptInfo.ReportDataSource = riList[0].ReportDataSource;
+                        rptInfo.ReportFolder = riList[0].ReportFolder;
+                        rptInfo.Width = riList[0].Width;
+                        rptInfo.Height = riList[0].Height;
+                        rptInfo.ctrlid = Convert.ToString(emp.USER_LOC_ID);
+                        rptInfo.scope = Convert.ToString(emp.USER_BR_SCOPE);
+                        rptInfo.role = Convert.ToString(emp.SUPER_ROLE);
+                        string _enc = EncryptQueryString(String.Format("RptId={0}&RptName={1}&Height={2}&RptDs={3}&RptPth={4}&RptPar={5}&brList={6}&partyList={7}&ctrlid={8}&scope={9}&p={10}&dateList={11}&hcList={12}&divList={13}&rptDesc={14}", rptIds, rptInfo.ReportName, rptInfo.Height, rptInfo.ReportDataSource, rptInfo.ReportFolder, rptInfo.rptPar, rptInfo.brList, rptInfo.partyList, rptInfo.ctrlid, rptInfo.scope, rptInfo.role, rptInfo.dateList, rptInfo.hcList, rptInfo.divList, rptInfo.ReportDescription));
+                        rptInfo.ReportURL = "../MyReports/CCDReportTemplate.aspx?" + _enc;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Danger(string.Format("<b>Exception occured.</b> " + ex.Message), true);
+            }
+            return View(rptInfo);
+        }
+
+        public string EncryptQueryString(string strQueryString)
+        {
+            EncryptDecryptQueryString objEDQueryString = new EncryptDecryptQueryString();
+            return objEDQueryString.Encrypt(strQueryString, "r0b1nr0y");
+        }
+
+        [HttpPost]
+        public ActionResult SetTempData(string reportId, string rptPar, string brList, string RptItem, string partyList, string dateList, string hcList, string divList, List<PartyForJson> partyJsonList)//
+        {
+            ReportInfo rptInfo = new ReportInfo();
+            rptInfo.ReportId = reportId;
+            rptInfo.rptPar = rptPar;
+            rptInfo.brList = brList;
+            rptInfo.rptItem = RptItem;
+            rptInfo.partyList = partyList;
+            rptInfo.dateList = dateList;
+            rptInfo.hcList = hcList;
+            rptInfo.divList = divList;
+            rptInfo.partyJsonList = partyJsonList;
+            TempData["rptInfo"] = rptInfo;
+            return new EmptyResult();
+        }
+        #endregion
+
+        #region Json
+        [AcceptVerbs(HttpVerbs.Get)]
+        public JsonResult GET_ACCOUNTING_BRANCH_LIST_BY_FILTER(int R_ID, int DIV_ID)
+        {
+            List<MST_BRANCH> L = new DAL_Branch().GET_ACCOUNTING_BRANCH_LIST_BY_FILTER(R_ID, DIV_ID);
+            return Json(L, JsonRequestBehavior.AllowGet);
+        }
+
+        [AcceptVerbs(HttpVerbs.Get)]
+        public JsonResult GET_MPR_BRANCH_LIST_BY_FILTER(int R_ID, int DIV_ID)
+        {
+            List<MST_BRANCH> L = new DAL_MktReport().GET_MPR_BRANCH_LIST_BY_FILTER(R_ID, DIV_ID);
+            return Json(L, JsonRequestBehavior.AllowGet);
+        }
+
+        [AcceptVerbs(HttpVerbs.Get)]
+        public ActionResult Rpt_GetPartyList(Int32? rid, Int32? did, Int32? brid, Int64? paid, string hdnStn, string term)
+        {
+            List<pList> pList = new List<pList>();
+            DataTable brdt = new DataTable();
+            brdt.Columns.Add(new DataColumn("BR_ID", typeof(int)));
+
+            DataRow brdr = null;
+
+            string s = hdnStn;
+            string[] values = s.Split(',');
+            for (int i = 0; i < values.Length; i++)
+            {
+                brdr = brdt.NewRow();
+                brdr["BR_ID"] = values[i];
+                brdt.Rows.Add(brdr);
+            }
+
+            pList = new DAL_REPORTS().RPT_GET_ALL_PARTY_LIST(rid, did, brid, paid, brdt, term);
+            var jsonResult = Json(pList, JsonRequestBehavior.AllowGet);
+            jsonResult.MaxJsonLength = int.MaxValue;
+            return jsonResult;
+        }
+
+        #endregion
+
+        #region Age Wise Outstanding - Branch Wise Summary
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult Age_Wise_Outstanding_Summary()
+        {
+            ViewBag.Header = "Branch Wise and Age Wise Outstanding Summary";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region OverDue Outstanding Generation
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult OverDue_Outstanding_Generation()
+        {
+            ViewBag.Header = "Over Due Outstanding Generation";
+            Rpt_OverDue_Outstanding_Generation hcd = new Rpt_OverDue_Outstanding_Generation();
+
+            hcd.OVERDUE_DATE = DateTime.Now;
+            hcd.OVERDUE_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region UnSubmitted Bill Details
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult UnSubmitted_Bill_Details()
+        {
+            ViewBag.Header = "UnSubmitted Bill Details";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Freight & Other Collection Details
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult Freight_Other_Collection_Details()
+        {
+            ViewBag.Header = "Freight & Other Collection Details";
+            Rpt_Freight_Other_Collection_Details hcd = new Rpt_Freight_Other_Collection_Details();
+
+            hcd.CBS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.CBS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_T_DATE = DateTime.Now;
+            hcd.CBS_T_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region BFDD Report
+        //Added By - Pramesh Kumar Vishwakarma, Date:10-02-2023
+        public ActionResult BFDD_Statement()
+        {
+            ViewBag.Header = "BFDD Statement";
+            Rpt_BFDD_Statement hcd = new Rpt_BFDD_Statement();
+
+            hcd.CBS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.CBS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_T_DATE = DateTime.Now;
+            hcd.CBS_T_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            hcd.NR_CODE_LIST = new SelectList(new DAL_ddList().GetDropdownList_Dtl("BFD_REASON"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Party Ledger For Bills Outstanding
+        //Added By - Pramesh Kumar Vishwakarma, Date:18-02-2023
+        public ActionResult Party_Ledger_For_Bills_Outstanding()
+        {
+            ViewBag.Header = "Party Ledger For Bills Outstanding";
+            Rpt_Party_Ledger_For_Bills_Outstanding hcd = new Rpt_Party_Ledger_For_Bills_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+         
+            return View(hcd);
+        }
+        #endregion
+
+
+        #region Party Wise Sub O/s Ledger Summary
+        //Added By - Pramesh Kumar Vishwakarma, Date:18-02-2023
+        public ActionResult Party_Wise_Sub_OS_Ledger_Summary ()
+        {
+            ViewBag.Header = "Party Wise Sub O/s Ledger Summary";
+            Rpt_Party_Wise_Sub_OS_Ledger_Summary hcd = new Rpt_Party_Wise_Sub_OS_Ledger_Summary();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+             
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Party Wise - Last Payment Details
+        //Added By - Pramesh Kumar Vishwakarma, Date:18-02-2023
+        public ActionResult Party_Wise_Last_Payment_Details()
+        {
+            ViewBag.Header = "Party Wise - Last Payment Details";
+            Rpt_Party_Wise_Last_Payment_Details hcd = new Rpt_Party_Wise_Last_Payment_Details();
+             
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+            hcd.OS_AS_ON_DATE = DateTime.Now;
+            hcd.OS_AS_ON_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Payment Collection Outstanding
+        //Added By - Pramesh Kumar Vishwakarma, Date:20-02-2023
+        public ActionResult Payment_Collection_Outstanding()
+        {
+            ViewBag.Header = "Payment Collection Outstanding";
+            Rpt_Payment_Collection hcd = new Rpt_Payment_Collection();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE_UPTO = DateTime.Now;
+            hcd.CBS_DATE_UPTO1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Party Wise Payment Collection & Outstanding – Year Wise Summary
+        //Added By - Pramesh Kumar Vishwakarma, Date:20-02-2023
+        public ActionResult Party_Wise_Payment_Collection_Outstanding()
+        {
+            ViewBag.Header = "Party Wise Payment Collection & Outstanding – Year Wise Summary";
+            Rpt_Payment_Collection hcd = new Rpt_Payment_Collection();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE_UPTO = DateTime.Now;
+            hcd.CBS_DATE_UPTO1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Submitted Outstanding – Court Cases And Disputed Classes
+        //Added By-Pramesh Kumar Vishwakarma, Date:20-02-2023
+        public ActionResult Submitted_Outstanding_For_Court_And_Disputed_Cases()
+        {
+            ViewBag.Header = "Submitted O/S Generation For Court And Disputed Cases";
+            Rpt_Payment_Collection hcd = new Rpt_Payment_Collection();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE_UPTO = DateTime.Now;
+            hcd.CBS_DATE_UPTO1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+ 
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Agewise Submitted Outstanding Generation
+        //Added By-Pramesh Kumar Vishwakarma, Date:21-02-2023
+        public ActionResult Agewise_Submitted_Outstanding_Generation()
+        {
+            ViewBag.Header = "Age Wise Analysis";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.PRINT_DATE = DateTime.Now;
+            hcd.PRINT_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            List<ddlClass> ddlEmpList = new DAL_ddList().GET_EMPLOYEE_LIST(0);
+            hcd.EMP_LIST = new SelectList(ddlEmpList.OrderBy(o=>o.ddlText), "ddlValue", "ddlText");
+            hcd.AgeYearWise = "1";
+            hcd.PartyType = "1";
+            if (TempData["rptInfo"] != null)
+            {
+                ReportInfo rptInfo = (ReportInfo)TempData["rptInfo"];
+                if (rptInfo.rptPar != null)
+                {
+                    string[] rptPar = rptInfo.rptPar.Split(',');
+                    if (rptPar.Length > 0)
+                    {
+                        hcd.R_ID = int.Parse(rptPar[0]);
+                    }
+                    if (rptPar.Length > 1)
+                    {
+                        hcd.HDN_DIV_ID = hcd.DIV_ID = int.Parse(rptPar[1]);
+                    }
+                    if (rptPar.Length > 2)
+                    {
+                        hcd.SEARCH_BR_ID = int.Parse(rptPar[2]);
+                    }
+
+                    if (rptPar.Length > 4)
+                    {
+                        hcd.CBS_DATE1 = rptPar[4];
+                        hcd.CBS_DATE = new DateTime(Convert.ToInt32(hcd.CBS_DATE1.Split('/')[2]), Convert.ToInt32(hcd.CBS_DATE1.Split('/')[1]), Convert.ToInt32(hcd.CBS_DATE1.Split('/')[0]));
+                    }
+                    if (rptPar.Length > 5)
+                    {
+                        hcd.BILL_AMOUNT = decimal.Parse(rptPar[5] == null ? "0" : rptPar[5]);
+                    }
+                    if (rptPar.Length > 6)
+                    {
+                        hcd.AgeYearWise = rptPar[6];
+                    }
+                    if (rptPar.Length > 7)
+                    {
+                        hcd.PartyType = rptPar[7];
+                    }
+                    if (rptPar.Length > 8)
+                    {
+                        hcd.EMP_ID = int.Parse(rptPar[8]);
+                    }
+                }
+                hcd.brListData = rptInfo.brList;
+                hcd.partyListData = rptInfo.partyList;
+                hcd.PartyJsonList = Newtonsoft.Json.JsonConvert.SerializeObject(rptInfo.partyJsonList);
+            }
+
+            return View(hcd);
+        }
+        #endregion
+
+
+      
+        #region  Party_Wise_Cheque_Collection_Details
+
+        //______________________Added By Rahul Mall__________________10/03/2023___
+
+        public ActionResult Party_Wise_Cheque_Collection_Details()
+        {
+            ViewBag.Header = "Party Wise Cheque Collection Details";
+            Rpt_Party_Wise_Cheque_Collection_Details hcd = new Rpt_Party_Wise_Cheque_Collection_Details();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+
+
+            return View(hcd);
+        }
+
+        #endregion
+
+    }
+}
+
+
+____________________________________________________Rpt_Party_Wise_Cheque_Collection_Details.cs________________________________________________
+
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+namespace BusinessLayer.Entity.CCDReport
+{
+    public class Rpt_Party_Wise_Cheque_Collection_Details
+    {                
+        public int? R_ID { get; set; }
+        public SelectList R_LIST { get; set; }
+
+        public int? DIV_ID { get; set; }
+        public SelectList DIV_LIST { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> BILLS_F_DATE { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string BILLS_F_DATE1 { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> BILLS_UPTO_DATE { get; set; }
+
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string BILLS_UPTO_DATE1 { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> CBS_DATE { get; set; }
+
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string CBS_DATE1 { get; set; }
+
+        public string brListData { get; set; }
+        public Nullable<int> AllBr { get; set; }
+
+        public string partyListData { get; set; }
+        public Nullable<int> AllParty { get; set; }
+
+        public Nullable<int> SEARCH_BR_ID { get; set; }
+        public SelectList SEARCH_BR_LIST { get; set; }
+
+        public string RptType { get; set; }
+
+        public Rpt_Party_Wise_Cheque_Collection_Details()
+        {
+            SEARCH_BR_LIST = new SelectList(new List<SelectListItem>
+                                    { 
+                                        new SelectListItem { Text = "0 - ALL BRANCH" , Value = "0"},
+                                        new SelectListItem { Text = "1 - SELECTED BRANCH" , Value = "1"},
+                                    }, "Value", "Text", 0);
+        }
+    }
+}
+
+
+      
