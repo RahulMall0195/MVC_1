@@ -1,0 +1,79 @@
+________________________________________________________CCDReportController.cs_______________________________________________
+
+
+
+ #region Agewise Submitted Outstanding Generation
+        //Added By-Pramesh Kumar Vishwakarma, Date:21-02-2023
+        public ActionResult Agewise_Submitted_Outstanding_Generation()
+        {
+            ViewBag.Header = "Age Wise Analysis";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.PRINT_DATE = DateTime.Now;
+            hcd.PRINT_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            List<ddlClass> ddlEmpList = new DAL_ddList().GET_EMPLOYEE_LIST(0);
+            hcd.EMP_LIST = new SelectList(ddlEmpList.OrderBy(o=>o.ddlText), "ddlValue", "ddlText");
+            hcd.AgeYearWise = "1";
+            hcd.PartyType = "1";
+            if (TempData["rptInfo"] != null)
+            {
+                ReportInfo rptInfo = (ReportInfo)TempData["rptInfo"];
+                if (rptInfo.rptPar != null)
+                {
+                    string[] rptPar = rptInfo.rptPar.Split(',');
+                    if (rptPar.Length > 0)
+                    {
+                        hcd.R_ID = int.Parse(rptPar[0]);
+                    }
+                    if (rptPar.Length > 1)
+                    {
+                        hcd.HDN_DIV_ID = hcd.DIV_ID = int.Parse(rptPar[1]);
+                    }
+                    if (rptPar.Length > 2)
+                    {
+                        hcd.SEARCH_BR_ID = int.Parse(rptPar[2]);
+                    }
+
+                    if (rptPar.Length > 4)
+                    {
+                        hcd.CBS_DATE1 = rptPar[4];
+                        hcd.CBS_DATE = new DateTime(Convert.ToInt32(hcd.CBS_DATE1.Split('/')[2]), Convert.ToInt32(hcd.CBS_DATE1.Split('/')[1]), Convert.ToInt32(hcd.CBS_DATE1.Split('/')[0]));
+                    }
+                    if (rptPar.Length > 5)
+                    {
+                        hcd.BILL_AMOUNT = decimal.Parse(rptPar[5] == null ? "0" : rptPar[5]);
+                    }
+                    if (rptPar.Length > 6)
+                    {
+                        hcd.AgeYearWise = rptPar[6];
+                    }
+                    if (rptPar.Length > 7)
+                    {
+                        hcd.PartyType = rptPar[7];
+                    }
+                    if (rptPar.Length > 8)
+                    {
+                        hcd.EMP_ID = int.Parse(rptPar[8]);
+                    }
+                }
+                hcd.brListData = rptInfo.brList;
+                hcd.partyListData = rptInfo.partyList;
+                hcd.PartyJsonList = Newtonsoft.Json.JsonConvert.SerializeObject(rptInfo.partyJsonList);
+            }
+
+            return View(hcd);
+        }
+        #endregion
