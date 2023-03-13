@@ -1,0 +1,2937 @@
+______________________________________________________________D:\ARC\08-03-2023\iTMS\eARC\Views\CCDReport\Agewise_Submitted_Outstanding_Generation.cshtml
+@model BusinessLayer.Entity.CCDReport.Rpt_Agewise_Submitted_Outstanding
+@{
+    ViewBag.Title = "Agewise Submitted Outstanding Generation";
+    Layout = "~/Views/Shared/_MainDashboard.cshtml";
+}
+
+@Styles.Render("~/bundles/Report/CommanStyle")
+@Scripts.Render("~/bundles/Report/CommanScripts")
+
+<style>
+    @@media screen and (max-width: 600px) {
+        .input-group-addon {
+            visibility: hidden;
+            clear: both;
+            float: left;
+            display: none;
+        }
+    }
+</style>
+
+@using (Html.BeginForm("Agewise_Submitted_Outstanding_Generation", "CCDReport", FormMethod.Post, new { @id = "frmAgewise_Submitted_Outstanding_Generation" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    Html.RenderPartial("_Alerts");
+    <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <b id="alertMessage"></b>
+    </div>
+    <div class="row">
+        <div class="col-xs-12 col-sm-6">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title">Input Parameters Box</h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+                <div class="widget-body">
+                    <div class="widget-main">
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="ddlRegion" class="lbl_9">Region</label>
+                                    @Html.DropDownListFor(x => x.R_ID, Model.R_LIST, "", new { @class = "chosen-select form-control", @id = "ddlRegion", @data_placeholder = "SELECT REGION" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <label for="ddlDivision" class="lbl_9">Division</label>
+                                    @Html.DropDownListFor(x => x.DIV_ID, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "", new { @class = "chosen-select form-control", @id = "ddlDivision", @data_placeholder = "SELECT DIVISION" })
+                                    @Html.ValidationMessageFor(x => x.DIV_ID)
+                                    @Html.HiddenFor(x => x.HDN_DIV_ID)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="ddlBrSelect" class="lbl_9">Branch</label>
+                                    @Html.DropDownListFor(x => x.SEARCH_BR_ID, Model.SEARCH_BR_LIST, "", new { @class = "chosen-select form-control", @id = "ddlBrSelect", @data_placeholder = "ALL BRANCH" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <div style="padding-top:20px;">
+                                        <label>
+                                            <input id="rdAgeWise" name="AgeYearWise" type="radio" class="ace" checked="@(Model.AgeYearWise=="1"?true:false)" />
+                                            <span class="lbl">&nbsp;&nbsp;Age Wise</span>
+                                        </label>
+                                        <label>
+                                            <input id="rdYearWise" name="AgeYearWise" type="radio" class="ace" checked="@(Model.AgeYearWise=="2"?true:false)" />
+                                            <span class="lbl">&nbsp;&nbsp;Year Wise O/S</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-3">
+                                    <label for="txtPrintDate" class="lbl_11">Print Date</label>
+                                    @Html.TextBoxFor(x => x.PRINT_DATE, "{0:yyyy-MM-dd}", new { @id = "txtPrintDate", @type = "date", @class = "form-control mobDate", @maxlength = "10", @Style = "padding-bottom:5px;" })
+                                    @Html.TextBoxFor(x => x.PRINT_DATE1, new { @id = "txtPrintDate1", @class = "form-control datepicker deskDate", @maxlength = "10", @placeholder = "dd/mm/yyyy", @autocomplete = "off", @Style = "padding-bottom:5px;", @readonly = "readonly" })
+                                </div>
+                                <div class="col-xs-3">
+                                    <label for="txtCBSCheckedUpTo" class="lbl_11">As On CBS Date</label>
+                                    @Html.TextBoxFor(x => x.CBS_DATE, "{0:yyyy-MM-dd}", new { @id = "txtCBSCheckedUpTo", @type = "date", @class = "form-control mobDate", @maxlength = "10", @Style = "padding-bottom:5px;" })
+                                    @Html.TextBoxFor(x => x.CBS_DATE1, new { @id = "txtCBSCheckedUpTo1", @class = "form-control datepicker deskDate", @maxlength = "10", @placeholder = "dd/mm/yyyy", @autocomplete = "off", @Style = "padding-bottom:5px;", @readonly = "readonly" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <label for="txtBillAmount" class="lbl_11">Bill Amount >= </label>
+                                    @Html.TextBoxFor(x => x.BILL_AMOUNT, new { @id = "txtBillAmount", @type = "text", @class = "form-control numeric", @maxlength = "10" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-12">
+                                    <div style="padding-top:20px;">
+                                        <label>
+                                            <input id="rdAllParties" name="Parties" type="radio" class="ace" checked="@(Model.PartyType == "1" ? true : false)" />
+                                            <span class="lbl">&nbsp;&nbsp;All Parties</span>
+                                        </label>
+                                        <label>
+                                            <input id="rdSelectedParties" name="Parties" type="radio" class="ace" checked="@(Model.PartyType == "2" ? true : false)" />
+                                            <span class="lbl">&nbsp;&nbsp;Selected Parties</span>
+                                        </label>
+                                        <label>
+                                            <input id="rdMiscParties" name="Parties" type="radio" class="ace" checked="@(Model.PartyType == "3" ? true : false)" />
+                                            <span class="lbl">&nbsp;&nbsp;Misc. Parties</span>
+                                        </label>
+                                        <label>
+                                            <input id="rdEmployeeParties" name="Parties" type="radio" class="ace" checked="@(Model.PartyType == "4" ? true : false)" />
+                                            <span class="lbl">&nbsp;&nbsp;Employee Party Wise Outstanding</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="ddlEmpCd" class="lbl_9">Emp Cd</label>
+                                    @Html.DropDownListFor(x => x.EMP_ID, Model.EMP_LIST, "", new { @class = "chosen-select form-control", @id = "ddlEmpCd", @data_placeholder = "SELECT EMP CD" })
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-3">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <div style="padding: 0px; width: 40%;float: left;">
+                        <h4 class="widget-title">Branch Box</h4>
+                    </div>
+                    <div style="padding: 0px; width: 50%; float: left; ">
+                        <span class="input-icon pull-right" style="padding:2px; ">
+                            <input type="text" autocomplete="off" class="form-control" id="txtSearchTable" placeholder="Search Branch" />
+                            <i class="ace-icon fa fa-search"></i>
+                        </span>
+                    </div>
+                    <div style="padding: 0px; width: 10%; float: right;">
+                        <span class="widget-toolbar">
+                            <a href="#" data-action="collapse">
+                                <i class="ace-icon fa fa-chevron-up"></i>
+                            </a>
+                        </span>
+                    </div>
+                </div>
+                <div class="widget-body" style="width: 100%;">
+                    <div id="bodyBranchList" class="widget-main" style="width: 100%; height: 292px; overflow-y: auto; overflow-x: hidden">
+                    </div>
+                    @Html.HiddenFor(model => model.brListData, new { id = "hdn_brListData" })
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xs-12 col-sm-3">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title"><span id="widget_lbl">Party Checklist Box</span></h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+
+                <div class="widget-body">
+                    <div id="bodyPartyList" class="widget-main" style="height: 292px; overflow-y: auto; overflow-x: hidden">
+                        <input type="text" id="txtPartList" name="party" />
+                    </div>
+                    @Html.HiddenFor(model => model.partyListData, new { id = "hdn_partyListData" })
+                    @Html.HiddenFor(model => model.PartyJsonList, new { id = "hdnPartyJsonList" })
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="text-align:center; padding-bottom:5px;">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <input type="button" id="btnShow" class="btn btn-success" value="Process Report" name="Save" style="width:auto;" />
+            <input type="reset" class="btn btn-default" value="Reset [Ctrl+R]" style="width:auto;" id="btnReset" />
+        </div>
+    </div>
+    <div class="row" style="text-align:center; padding-bottom:5px;">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <span id="spnError" class="field-validation-error">&nbsp;</span>
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        function init() {
+            shortcut.add("Ctrl+R", function () {
+                // Reset
+                var url = '@Url.Action("Agewise_Submitted_Outstanding_Generation", "CCDReport")';
+                window.location.href = url;
+            });
+        }
+        window.onload = init;
+
+        /*----- Chosen Select Dropdown Validation ----*/
+        var validator = $("#frmAgewise_Submitted_Outstanding_Generation").data('validator');
+        validator.settings.ignore = ":hidden:not(select)";
+        $('.chosen-select').chosen().change(function () {
+            $(this).trigger('click');
+        });
+        /*----- Chosen Select Dropdown Validation End----*/
+
+        $("#txtSearchTable").keyup(function () {
+            var value = this.value.toLowerCase().trim();
+             
+            $("#dvBrList > .ui-checkbox").each(function (index) {
+                $(this).find("label").each(function () {
+                    var id = $(this).text().toLowerCase().trim();
+                    var not_found = (id.indexOf(value) == -1);
+                    $(this).closest('.ui-checkbox').toggle(!not_found);
+                    return not_found;
+                });
+            });
+        });
+
+        $('#btnShow').click(function (e) {
+            if (CheckSession(e) == 1) {
+                getReport();
+            }
+        });
+
+        function getReport() {
+            var rId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var ddlBrSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+            var cbsDate = $('#txtCBSCheckedUpTo1').val();
+            var printDate = $('#txtPrintDate1').val();
+            var empCd = $("#ddlEmpCd option:selected").val() == '' ? '0' : $("#ddlEmpCd option:selected").val();
+
+            $("input[name=partyListData]").val($("#txtPartList").val());
+
+            var selBr = 0;
+            var brList = '0';
+            if (ddlBrSelect == 1) {
+                brList = $("#hdn_brListData").val() == '' ? '0' : $("#hdn_brListData").val();
+                selBr = 1;
+            }
+            else {
+                selBr = 0;
+            }
+
+            var ageYearWise = 0;
+            if ($("#rdAgeWise").is(':checked')) {
+                ageYearWise = 1;
+            }
+            else if ($("#rdYearWise").is(':checked')) {
+                ageYearWise = 2;
+            }
+
+            var partyType = 0;
+            if ($("#rdAllParties").is(':checked')) {
+                partyType = 1;
+            }
+            else if ($("#rdSelectedParties").is(':checked')) {
+                partyType = 2;
+            }
+            else if ($("#rdMiscParties").is(':checked')) {
+                partyType = 3;
+            }
+            else if ($("#rdEmployeeParties").is(':checked')) {
+                partyType = 4;
+            }
+
+            var billAmt = $("#txtBillAmount").val() == '' ? '0' : $("#txtBillAmount").val();
+            var partyList = $("#txtPartList").val() == '' ? '0' : $("#txtPartList").val();
+            var partyJsonList = null;
+            if ($("#txtPartList").val() != '') {
+                partyJsonList = $("#txtPartList").tokenInput("get");
+            }
+
+            // Report Parameters
+            var paraList = new Array();
+            paraList.push(rId);
+            paraList.push(divId);
+            paraList.push(selBr);
+            paraList.push(printDate);
+            paraList.push(cbsDate);
+            paraList.push(billAmt);
+            paraList.push(ageYearWise);
+            paraList.push(partyType);
+            paraList.push(empCd);
+
+            // End Report Parameters
+            var reportId = 'CCD000017';
+            var flag = 0;
+            if (parseInt(divId) == 0) {
+                flag = 1;
+                $('#spnError').text('Select Division.').show();
+                return false;
+            }
+
+            if (parseInt(flag) == 0) {
+                var dataObject = '{reportId:"' + reportId + '",rptPar:"' + paraList + '",brList:"' + brList + '",partyList:"' + partyList + '",partyJsonList:' + JSON.stringify(partyJsonList) + '}';
+                $.ajax({
+                    type: "POST",
+                    url: '../CCDReport/SetTempData',
+                    data: dataObject,
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "text",
+                    beforeSend: function () {
+                        $('#LoadingModalLabel').text('Please wait... We are processing your request.').show();
+                        $('#LoadingModal').modal('show');
+                    },
+                    success: function (r) {
+                        var url = '@Url.Action("ReportTemplate", "CCDReport")';
+                        window.location.href = url;
+                        $('#spnError').text('');
+                    },
+                    complete: function (json) {
+                        $("#LoadingModal").modal('hide');
+                    },
+                    error: function (result) {
+                        alert(result.status + ': ' + result.statusText);
+                    }
+                });
+            }
+        }
+
+        $("#ddlDivision").change(function () {
+            BranchList();
+        });
+
+        Division();
+
+        BranchList();
+
+        function BranchList() {
+            var ddlBrSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+            $('#spnError').text('');
+            var dId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+
+            if (ddlBrSelect == 0) {
+                if (dId > 0) {
+                    AllAccessBranch(0);
+                }
+            }
+            else {
+                AllAccessBranch(1);
+                var chkBrListVal = $("input[name=brListData]").val();
+                var brListVal = chkBrListVal.split(',');
+                for (i = 0; i < brListVal.length; i++) {
+                    $(".chkBrnachlist:checkbox[value='" + brListVal[i] + "']").prop('checked', true);
+                }
+            }
+            chkBrListData();
+        }
+
+        function Division() {
+            var regionId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            var str = '';
+            if (parseInt(regionId) > 0) {
+                $.ajax({
+                    type: "GET",
+                    url: "../Report/GetDivisionList",
+                    data: { rId: regionId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        str = '<option value=""></option>';
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                str += '<option value=' + data[i].DIV_ID + '>' + data[i].DIV_CODE + ' - ' + data[i].DIV_NAME + '</option>';
+                            }
+                            $("#ddlDivision").empty().append(str);
+                            $("#ddlDivision").trigger("chosen:updated");
+                        }
+
+                        $("#ddlDivision").val($("#HDN_DIV_ID").val()).trigger("chosen:updated");
+                    }
+                });
+            }
+            else {
+                str = '<option value=""></option>';
+                $("#ddlDivision").empty().append(str);
+                $("#ddlDivision").trigger("chosen:updated");
+            }
+        }
+
+        $('#ddlRegion').on('change', function () {
+            Division();
+            AllAccessBranch(0);
+            $('#spnError').text('').hide();
+        });
+
+        function AllAccessBranch(chkState) {
+            var body = '';
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var rId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            if (parseInt(divId) > 0) {
+                $.ajax({
+                    url: "../CCDReport/GET_ACCOUNTING_BRANCH_LIST_BY_FILTER",
+                    type: "GET",
+                    data: { R_ID: rId, DIV_ID: divId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var body = '';
+                        body += '<div id="dvBrList" class="row no-gutters" style="display:block">';
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                body += '<div class="col-xs-6 col-sm-6 col-md-6 col-lg-6 ui-checkbox">';
+                                body += '<label class="checkbox-inline" style="font-size: 10px;">';
+                                if (chkState == 1) {
+                                    body += '<input id="chkBr_' + data[i].BR_ID + '" type="checkbox" value="' + data[i].BR_ID + '" name="chkBranch" class="chkBrnachlist">' + data[i].BR_NAME;
+                                }
+                                else {
+                                    body += '<input id="chkBr_' + data[i].BR_ID + '" type="checkbox" value="' + data[i].BR_ID + '" name="chkBranch" class="chkBrnachlist" checked>' + data[i].BR_NAME;
+                                }
+                                body += '</label>';
+                                body += '</div>';
+                            }
+                            body += '</div>';
+                            $('#bodyBranchList').empty().append(body);
+                        }
+                    }
+                });
+            }
+        }
+
+        $(document).on('change', 'div.ui-checkbox', function () {
+            chkBrListData();
+        });
+
+        function chkBrListData() {
+            chkBrListVal = [];
+            $('input:checkbox.chkBrnachlist:checked').each(function () {
+                chkBrListVal.push($(this).attr('value'));
+                //if (chkBrListVal.length > 20) {
+                //    $(this).prop('checked', false);
+                //    return false;
+                //}
+            });
+            $("input[name=brListData]").val(chkBrListVal);
+        }
+
+        $('#ddlBrSelect').on('change', function () {
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            if (parseInt($(this).val()) == 0 && parseInt(divId) > 0) {
+                $(".chkBrnachlist:checkbox").prop('checked', true);
+            }
+            else {
+                $(".chkBrnachlist:checkbox").prop('checked', false);
+            }
+        });
+
+        $('#btnReset').click(function () {
+            // Reset
+            var url = '@Url.Action("Agewise_Submitted_Outstanding_Generation", "CCDReport")';
+            window.location.href = url;
+        });
+
+        $(function () {
+
+            $('#txtCBSCheckedUpTo1').datepicker({
+                dateFormat: 'dd/mm/yy'
+                , changeMonth: true
+                , changeYear: true
+                , maxDate: 0
+                , onClose: function (date) {
+                    $('#txtCBSCheckedUpTo').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+                }
+                , onSelect: function (selectedDate) {
+                    $('#txtCBSCheckedUpTo').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+                }
+            });
+
+        });
+
+        $("#txtPartList").val('').hide();
+        $('#ddlEmpCd_chosen').attr("style", "pointer-events: none");
+        $('#rdEmployeeParties,#rdAllParties,#rdSelectedParties,#rdMiscParties').change(function () {
+            if ($("#rdAllParties").is(':checked') || $("#rdSelectedParties").is(':checked') || $("#rdMiscParties").is(':checked')) {
+                $("#ddlEmpCd").val('').trigger('chosen:updated');
+                $('#ddlEmpCd_chosen').attr("style", "pointer-events: none");
+            }
+            else if ($("#rdEmployeeParties").is(':checked')) {
+                $("#ddlEmpCd").val('').trigger('chosen:updated');
+                $('#ddlEmpCd_chosen').attr("style", "pointer-events: all");
+            }
+            PartyList();
+        });
+        PartyList();
+        function PartyList() {
+            if ($("#rdSelectedParties").is(':checked')) {
+                chkBrListData();
+                var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+                var hdnBr = $("#hdn_brListData").val() == '' ? '0' : $("#hdn_brListData").val();
+                var brSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+
+                if (brSelect == '0') { }
+                else {
+                    hdnBr = 0;
+                }
+                var url = 'Rpt_GetPartyList?rid=0&did=' + divId + '&brid=0&paid=0&hdnStn=' + hdnBr + "&term=";
+                if (parseInt(divId) == 0) {
+                    $("#txtPartList").hide();
+                    $('.token-input-list').remove();
+                }
+                else {
+                    if ($(".token-input-list").length > 0) {
+                    }
+                    else {
+                        var myToken = $("#txtPartList").tokenInput(url, {
+                            preventDuplicates: true,
+                            minChars: 4,
+                            tokenLimit: 20,
+                            hintText: "Type Party Name",
+                            noResultsText: "No Result",
+                            queryParam: "term"
+                        });
+
+                        var dArr = JSON.parse($("#hdnPartyJsonList").val());
+                        for (var i = 0; i < dArr.length; i++) {
+                            myToken.tokenInput("add", { id: dArr[i].id, name: dArr[i].name });
+                        }
+                    }
+                }
+            }
+            else {
+                $('.token-input-list').remove();
+            }
+        }
+    });
+
+</script>
+
+<style>
+    .chosen-container {
+        min-width: 100% !important;
+    }
+</style>
+<style>
+    ul.token-input-list-facebook {
+        width: 100%;
+    }
+
+    ul.token-input-list {
+        width: 100%;
+    }
+</style>
+
+______________________________________________________________D:\ARC\08-03-2023\iTMS\eARC\Controllers\CCDReportController.cs
+
+
+using BusinessLayer;
+using BusinessLayer.DAL;
+using BusinessLayer.Entity;
+using BusinessLayer.Entity.CCDReport;
+using System;
+using System.Collections.Generic;
+using System.Data;
+using System.Globalization;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+
+namespace eARC.Controllers
+{
+    //Added By - Pramesh Kumar Vishwakarma, Date:07-02-2023
+    public class CCDReportController : BaseController
+    {
+        private readonly List<ReportInfo> report = new List<ReportInfo>();
+
+        public CCDReportController()
+        {
+            report = new DAL_CCDReport().REPORT_LIST();
+        }
+
+        #region Report Common Templates
+        public ActionResult ReportTemplate()
+        {
+            ViewBag.Header = "iTMS Reports";
+            ReportInfo rptInfo = new ReportInfo();
+            try
+            {
+                if (TempData["rptInfo"] != null)
+                {
+                    rptInfo = (ReportInfo)TempData["rptInfo"];
+                    TempData.Keep("rptInfo");
+                    string rptIds = rptInfo.ReportId;
+
+                    List<ReportInfo> riList = report.Where(w => w.ReportId == rptIds).ToList();
+                    if (riList.Count() > 0)
+                    {
+                        rptInfo.SourceURL = riList[0].SourceURL;
+                        rptInfo.ReportName = riList[0].ReportName;
+                        rptInfo.ReportDescription = riList[0].ReportDescription;
+                        rptInfo.ReportDataSource = riList[0].ReportDataSource;
+                        rptInfo.ReportFolder = riList[0].ReportFolder;
+                        rptInfo.Width = riList[0].Width;
+                        rptInfo.Height = riList[0].Height;
+                        rptInfo.ctrlid = Convert.ToString(emp.USER_LOC_ID);
+                        rptInfo.scope = Convert.ToString(emp.USER_BR_SCOPE);
+                        rptInfo.role = Convert.ToString(emp.SUPER_ROLE);
+                        string _enc = EncryptQueryString(String.Format("RptId={0}&RptName={1}&Height={2}&RptDs={3}&RptPth={4}&RptPar={5}&brList={6}&partyList={7}&ctrlid={8}&scope={9}&p={10}&dateList={11}&hcList={12}&divList={13}&rptDesc={14}", rptIds, rptInfo.ReportName, rptInfo.Height, rptInfo.ReportDataSource, rptInfo.ReportFolder, rptInfo.rptPar, rptInfo.brList, rptInfo.partyList, rptInfo.ctrlid, rptInfo.scope, rptInfo.role, rptInfo.dateList, rptInfo.hcList, rptInfo.divList, rptInfo.ReportDescription));
+                        rptInfo.ReportURL = "../MyReports/CCDReportTemplate.aspx?" + _enc;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Danger(string.Format("<b>Exception occured.</b> " + ex.Message), true);
+            }
+            return View(rptInfo);
+        }
+
+        public string EncryptQueryString(string strQueryString)
+        {
+            EncryptDecryptQueryString objEDQueryString = new EncryptDecryptQueryString();
+            return objEDQueryString.Encrypt(strQueryString, "r0b1nr0y");
+        }
+
+        [HttpPost]
+        public ActionResult SetTempData(string reportId, string rptPar, string brList, string RptItem, string partyList, string dateList, string hcList, string divList, List<PartyForJson> partyJsonList)//
+        {
+            ReportInfo rptInfo = new ReportInfo();
+            rptInfo.ReportId = reportId;
+            rptInfo.rptPar = rptPar;
+            rptInfo.brList = brList;
+            rptInfo.rptItem = RptItem;
+            rptInfo.partyList = partyList;
+            rptInfo.dateList = dateList;
+            rptInfo.hcList = hcList;
+            rptInfo.divList = divList;
+            rptInfo.partyJsonList = partyJsonList;
+            TempData["rptInfo"] = rptInfo;
+            return new EmptyResult();
+        }
+        #endregion
+
+        #region Json
+        [AcceptVerbs(HttpVerbs.Get)]
+        public JsonResult GET_ACCOUNTING_BRANCH_LIST_BY_FILTER(int R_ID, int DIV_ID)
+        {
+            List<MST_BRANCH> L = new DAL_Branch().GET_ACCOUNTING_BRANCH_LIST_BY_FILTER(R_ID, DIV_ID);
+            return Json(L, JsonRequestBehavior.AllowGet);
+        }
+
+        [AcceptVerbs(HttpVerbs.Get)]
+        public JsonResult GET_MPR_BRANCH_LIST_BY_FILTER(int R_ID, int DIV_ID)
+        {
+            List<MST_BRANCH> L = new DAL_MktReport().GET_MPR_BRANCH_LIST_BY_FILTER(R_ID, DIV_ID);
+            return Json(L, JsonRequestBehavior.AllowGet);
+        }
+
+        [AcceptVerbs(HttpVerbs.Get)]
+        public ActionResult Rpt_GetPartyList(Int32? rid, Int32? did, Int32? brid, Int64? paid, string hdnStn, string term)
+        {
+            List<pList> pList = new List<pList>();
+            DataTable brdt = new DataTable();
+            brdt.Columns.Add(new DataColumn("BR_ID", typeof(int)));
+
+            DataRow brdr = null;
+
+            string s = hdnStn;
+            string[] values = s.Split(',');
+            for (int i = 0; i < values.Length; i++)
+            {
+                brdr = brdt.NewRow();
+                brdr["BR_ID"] = values[i];
+                brdt.Rows.Add(brdr);
+            }
+
+            pList = new DAL_REPORTS().RPT_GET_ALL_PARTY_LIST(rid, did, brid, paid, brdt, term);
+            var jsonResult = Json(pList, JsonRequestBehavior.AllowGet);
+            jsonResult.MaxJsonLength = int.MaxValue;
+            return jsonResult;
+        }
+
+        #endregion
+
+        #region Age Wise Outstanding - Branch Wise Summary
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult Age_Wise_Outstanding_Summary()
+        {
+            ViewBag.Header = "Branch Wise and Age Wise Outstanding Summary";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region OverDue Outstanding Generation
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult OverDue_Outstanding_Generation()
+        {
+            ViewBag.Header = "Over Due Outstanding Generation";
+            Rpt_OverDue_Outstanding_Generation hcd = new Rpt_OverDue_Outstanding_Generation();
+
+            hcd.OVERDUE_DATE = DateTime.Now;
+            hcd.OVERDUE_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region UnSubmitted Bill Details
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult UnSubmitted_Bill_Details()
+        {
+            ViewBag.Header = "UnSubmitted Bill Details";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Freight & Other Collection Details
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public ActionResult Freight_Other_Collection_Details()
+        {
+            ViewBag.Header = "Freight & Other Collection Details";
+            Rpt_Freight_Other_Collection_Details hcd = new Rpt_Freight_Other_Collection_Details();
+
+            hcd.CBS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.CBS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_T_DATE = DateTime.Now;
+            hcd.CBS_T_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region BFDD Report
+        //Added By - Pramesh Kumar Vishwakarma, Date:10-02-2023
+        public ActionResult BFDD_Statement()
+        {
+            ViewBag.Header = "BFDD Statement";
+            Rpt_BFDD_Statement hcd = new Rpt_BFDD_Statement();
+
+            hcd.CBS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.CBS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_T_DATE = DateTime.Now;
+            hcd.CBS_T_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            hcd.NR_CODE_LIST = new SelectList(new DAL_ddList().GetDropdownList_Dtl("BFD_REASON"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Party Ledger For Bills Outstanding
+        //Added By - Pramesh Kumar Vishwakarma, Date:18-02-2023
+        public ActionResult Party_Ledger_For_Bills_Outstanding()
+        {
+            ViewBag.Header = "Party Ledger For Bills Outstanding";
+            Rpt_Party_Ledger_For_Bills_Outstanding hcd = new Rpt_Party_Ledger_For_Bills_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+         
+            return View(hcd);
+        }
+        #endregion
+
+
+        #region Party Wise Sub O/s Ledger Summary
+        //Added By - Pramesh Kumar Vishwakarma, Date:18-02-2023
+        public ActionResult Party_Wise_Sub_OS_Ledger_Summary ()
+        {
+            ViewBag.Header = "Party Wise Sub O/s Ledger Summary";
+            Rpt_Party_Wise_Sub_OS_Ledger_Summary hcd = new Rpt_Party_Wise_Sub_OS_Ledger_Summary();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+             
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Party Wise - Last Payment Details
+        //Added By - Pramesh Kumar Vishwakarma, Date:18-02-2023
+        public ActionResult Party_Wise_Last_Payment_Details()
+        {
+            ViewBag.Header = "Party Wise - Last Payment Details";
+            Rpt_Party_Wise_Last_Payment_Details hcd = new Rpt_Party_Wise_Last_Payment_Details();
+             
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+            hcd.OS_AS_ON_DATE = DateTime.Now;
+            hcd.OS_AS_ON_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Payment Collection Outstanding
+        //Added By - Pramesh Kumar Vishwakarma, Date:20-02-2023
+        public ActionResult Payment_Collection_Outstanding()
+        {
+            ViewBag.Header = "Payment Collection Outstanding";
+            Rpt_Payment_Collection hcd = new Rpt_Payment_Collection();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE_UPTO = DateTime.Now;
+            hcd.CBS_DATE_UPTO1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Party Wise Payment Collection & Outstanding – Year Wise Summary
+        //Added By - Pramesh Kumar Vishwakarma, Date:20-02-2023
+        public ActionResult Party_Wise_Payment_Collection_Outstanding()
+        {
+            ViewBag.Header = "Party Wise Payment Collection & Outstanding – Year Wise Summary";
+            Rpt_Payment_Collection hcd = new Rpt_Payment_Collection();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE_UPTO = DateTime.Now;
+            hcd.CBS_DATE_UPTO1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Submitted Outstanding – Court Cases And Disputed Classes
+        //Added By-Pramesh Kumar Vishwakarma, Date:20-02-2023
+        public ActionResult Submitted_Outstanding_For_Court_And_Disputed_Cases()
+        {
+            ViewBag.Header = "Submitted O/S Generation For Court And Disputed Cases";
+            Rpt_Payment_Collection hcd = new Rpt_Payment_Collection();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE_UPTO = DateTime.Now;
+            hcd.CBS_DATE_UPTO1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+ 
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+        #endregion
+
+        #region Agewise Submitted Outstanding Generation
+        //Added By-Pramesh Kumar Vishwakarma, Date:21-02-2023
+        public ActionResult Agewise_Submitted_Outstanding_Generation()
+        {
+            ViewBag.Header = "Age Wise Analysis";
+            Rpt_Agewise_Submitted_Outstanding hcd = new Rpt_Agewise_Submitted_Outstanding();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.PRINT_DATE = DateTime.Now;
+            hcd.PRINT_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            List<ddlClass> ddlEmpList = new DAL_ddList().GET_EMPLOYEE_LIST(0);
+            hcd.EMP_LIST = new SelectList(ddlEmpList.OrderBy(o=>o.ddlText), "ddlValue", "ddlText");
+            hcd.AgeYearWise = "1";
+            hcd.PartyType = "1";
+            if(TempData["rptInfo"] != null)
+            {
+                ReportInfo rptInfo = (ReportInfo)TempData["rptInfo"];
+                if (rptInfo.rptPar != null)
+                {
+                    string[] rptPar = rptInfo.rptPar.Split(',');
+                    if (rptPar.Length > 0)
+                    {
+                        hcd.R_ID = int.Parse(rptPar[0]);
+                    }
+                    if (rptPar.Length > 1)
+                    {
+                        hcd.HDN_DIV_ID = hcd.DIV_ID = int.Parse(rptPar[1]);
+                    }
+                    if (rptPar.Length > 2)
+                    {
+                        hcd.SEARCH_BR_ID = int.Parse(rptPar[2]);
+                    }
+
+                    if (rptPar.Length > 4)
+                    {
+                        hcd.CBS_DATE1 = rptPar[4];
+                        hcd.CBS_DATE = new DateTime(Convert.ToInt32(hcd.CBS_DATE1.Split('/')[2]), Convert.ToInt32(hcd.CBS_DATE1.Split('/')[1]), Convert.ToInt32(hcd.CBS_DATE1.Split('/')[0]));
+                    }
+                    if (rptPar.Length > 5)
+                    {
+                        hcd.BILL_AMOUNT = decimal.Parse(rptPar[5] == null ? "0" : rptPar[5]);
+                    }
+                    if (rptPar.Length > 6)
+                    {
+                        hcd.AgeYearWise = rptPar[6];
+                    }
+                    if (rptPar.Length > 7)
+                    {
+                        hcd.PartyType = rptPar[7];
+                    }
+                    if (rptPar.Length > 8)
+                    {
+                        hcd.EMP_ID = int.Parse(rptPar[8]);
+                    }
+                }
+                hcd.brListData = rptInfo.brList;
+                hcd.partyListData = rptInfo.partyList;
+                hcd.PartyJsonList = Newtonsoft.Json.JsonConvert.SerializeObject(rptInfo.partyJsonList);
+            }
+
+            return View(hcd);
+        }
+        #endregion
+
+
+      
+        #region  Party_Wise_Cheque_Collection_Details
+
+        //______________________Added By Rahul Mall__________________10/03/2023___
+
+        public ActionResult Party_Wise_Cheque_Collection_Details()
+        {
+            ViewBag.Header = "Party Wise Cheque Collection Details";
+            Rpt_Party_Wise_Cheque_Collection_Details hcd = new Rpt_Party_Wise_Cheque_Collection_Details();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+
+        #endregion
+
+        #region Month_Wise_Bill_Realisation_Details
+
+        //______________________Added By Rahul Mall__________________10/03/2023___
+
+        public ActionResult Month_Wise_Bill_Realisation_Details()
+        {
+            ViewBag.Header = "Month Wise Bill Realisation Details";
+            Rpt_Month_Wise_Bill_Realisation_Details hcd = new Rpt_Month_Wise_Bill_Realisation_Details();
+
+
+            DateTime dt = DateTime.ParseExact(emp.CBS_DT, "dd/MM/yyyy", CultureInfo.InvariantCulture);
+            List<string> Year_list = new DAL_Common().GET_YEAR_LIST(1, dt, 0);
+
+            hcd.MPR_YR_LIST = new SelectList(Year_list, "", "");
+
+            List<ddlClass> Month_list = new DAL_Common().GET_MONTH_LIST();
+            hcd.MPR_MTH_LIST = new SelectList(Month_list, "ddlValue", "ddlText", null);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+          
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+
+        #endregion
+
+        #region Bill_MR_Pending_ToPay_TBB_Booking_Report
+
+        public ActionResult Bill_MR_Pending_ToPay_TBB_Booking_Report()
+        {
+            ViewBag.Header = "Bill/MR Pending To-Pay & To Be Billed Booking Report Against Door Delivery Consignments";
+            Rpt_Bill_MR_Pending_ToPay_TBB_Booking_Report hcd = new Rpt_Bill_MR_Pending_ToPay_TBB_Booking_Report();
+
+            hcd.BILLS_F_DATE = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+            hcd.BILLS_F_DATE1 = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.BILLS_UPTO_DATE = DateTime.Now;
+            hcd.BILLS_UPTO_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            hcd.CBS_DATE = DateTime.Now;
+            hcd.CBS_DATE1 = DateTime.Now.ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+            List<ddlClass> ddlRegionList = new DAL_ddList().GET_REGION_BY_ACCESS_USE_RPT(Convert.ToDecimal(emp.USER_ID));
+            hcd.R_LIST = new SelectList(ddlRegionList.Where(x => x.ddlValue != "0"), "ddlValue", "ddlText");
+
+            return View(hcd);
+        }
+
+        #endregion
+
+
+    }
+}
+
+______________________________________________________________D:\ARC\08-03-2023\iTMS\BusinessLayer\DAL\DAL_CCDReport.cs
+
+using BusinessLayer.Entity;
+using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace BusinessLayer.DAL
+{
+    public class DAL_CCDReport
+    {
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        public List<ReportInfo> REPORT_LIST()
+        {
+            List<ReportInfo> report = new List<ReportInfo>();
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000006",
+                SourceURL = "../CCDReport/Age_Wise_Outstanding_Summary",
+                ReportName = "Branch Wise and Age Wise Outstanding Summary",
+                ReportDescription = "Branch Wise and Age Wise Outstanding Summary",
+                ReportDataSource = "CCD000006",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000007",
+                SourceURL = "../CCDReport/OverDue_Outstanding_Generation",
+                ReportName = "Over Due Outstanding Generation",
+                ReportDescription = "Over Due Outstanding Generation",
+                ReportDataSource = "CCD000007",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000009",
+                SourceURL = "../CCDReport/UnSubmitted_Bill_Details",
+                ReportName = "UnSubmitted Bill Details",
+                ReportDescription = "UnSubmitted Bill Details",
+                ReportDataSource = "CCD000009",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000011",
+                SourceURL = "../CCDReport/Freight_Other_Collection_Details",
+                ReportName = "Freight & Other Collection Details",
+                ReportDescription = "Freight & Other Collection Details",
+                ReportDataSource = "CCD000011",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000012",
+                SourceURL = "../CCDReport/BFDD_Statement",
+                ReportName = "BFDD Statement",
+                ReportDescription = "BFDD Statement",
+                ReportDataSource = "CCD000012",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000013",
+                SourceURL = "../CCDReport/Party_Ledger_For_Bills_Outstanding",
+                ReportName = "Party Ledger For Bills Outstanding",
+                ReportDescription = "Party Ledger For Bills Outstanding",
+                ReportDataSource = "CCD000013",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000014",
+                SourceURL = "../CCDReport/Party_Wise_Sub_OS_Ledger_Summary",
+                ReportName = "Party Wise Sub O/s Ledger Summary",
+                ReportDescription = "Party Wise Sub O/s Ledger Summary",
+                ReportDataSource = "CCD000014",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000015",
+                SourceURL = "../CCDReport/Party_Wise_Last_Payment_Details",
+                ReportName = "Party Wise - Last Payment Details",
+                ReportDescription = "Party Wise - Last Payment Details",
+                ReportDataSource = "CCD000015",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000008",
+                SourceURL = "../CCDReport/Payment_Collection_Outstanding",
+                ReportName = "Payment Collection Outstanding",
+                ReportDescription = "Payment Collection Outstanding",
+                ReportDataSource = "CCD000008",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+           
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000010",
+                SourceURL = "../CCDReport/Party_Wise_Payment_Collection_Outstanding",
+                ReportName = "Party Wise Payment Collection Outstanding – Year Wise Summary",
+                ReportDescription = "Party Wise Payment Collection Outstanding – Year Wise Summary",
+                ReportDataSource = "CCD000010",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000016",
+                SourceURL = "../CCDReport/Submitted_Outstanding_For_Court_And_Disputed_Cases",
+                ReportName = "Submitted Outstanding For Court And Disputed Cases",
+                ReportDescription = "Submitted Outstanding For Court And Disputed Cases",
+                ReportDataSource = "CCD000016",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+            
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000017",
+                SourceURL = "../CCDReport/Agewise_Submitted_Outstanding_Generation",
+                ReportName = "Agewise Submitted Outstanding Generation",
+                ReportDescription = "Agewise Submitted Outstanding Generation",
+                ReportDataSource = "CCD000017",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+
+
+            //---------------------Added By Rahul Mall---------10/03/2023
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000018",
+                SourceURL = "../CCDReport/Party_Wise_Cheque_Collection_Details",
+                ReportName = "Party Wise Cheque Collection Details",
+                ReportDescription = "Party Wise Cheque Collection Details",
+                ReportDataSource = "CCD000018",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+            //---------------------Added By Rahul Mall---------11/03/2023
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000019",
+                SourceURL = "../CCDReport/Month_Wise_Bill_Realisation_Details",
+                ReportName = "Month Wise Bill Realisation Details",
+                ReportDescription = "Month Wise Bill Realisation Details",
+                ReportDataSource = "CCD000019",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+
+
+            //---------------------Added By Rahul Mall---------11/03/2023
+
+            report.Add(new ReportInfo()
+            {
+                ReportId = "CCD000020",
+                SourceURL = "../CCDReport/Bill_MR_Pending_ToPay_TBB_Booking_Report",
+                ReportName = "Bill MR Pending ToPay TBB Booking Report",
+                ReportDescription = "Bill MR Pending ToPay TBB Booking Report",
+                ReportDataSource = "CCD000020",
+                ReportFolder = "RptCcd",
+                Width = 100,
+                Height = 485,
+            });
+           
+            return report;
+        }
+
+        //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+        //Age Wise Outstanding - Branch Wise Summary= "CCD000006"
+        public DataSet RPT_AGE_WISE_OUTSTANDING_SUMMARY(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),                                      
+                                       new SqlParameter("@CBSDATE", rptPara.cbsUpto),                                      
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList)
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:08-02-2023
+        //Over Due Outstanding Generation= "CCD000007"
+        public DataSet RPT_OVERDUE_OUTSTANDING_GENERATION(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@OVERDUEDATE", rptPara.OverDue),                                      
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList),
+                                       new SqlParameter("@TBL_CUST_IDS",rptPara.dtCustList)
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:08-02-2023
+        //Over Due Outstanding Generation= "CCD000009"
+        public DataSet RPT_UNSUBMITTED_BILL_DETAILS(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),                                
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList) 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:08-02-2023
+        //Freight & Other Collection Details= "CCD000011"
+        public DataSet RPT_FREIGHT_OTHER_COLLECTION_DETAILS(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),                                
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@IncBA", rptPara.incBA)
+
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:10-02-2023
+        //BFDD Statement= "CCD000012"
+        public DataSet RPT_BFDD_STATEMENT(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),                                
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@ReportType", rptPara.ReportType),
+                                       new SqlParameter("@ReportFor", rptPara.ReportFor),
+                                       new SqlParameter("@TBL_NR_IDS",rptPara.dtNrIds), 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:18-02-2023
+        //Party Ledger For Bills Outstanding= "CCD000013"
+        public DataSet Party_Ledger_For_Bills_Outstanding(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),                                
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@CBS_DATE", rptPara.cbsUpto),
+                                       new SqlParameter("@INC_CNS", rptPara.incCns),
+                                       new SqlParameter("@TBL_CUST_IDS",rptPara.dtCustList), 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:18-02-2023
+        //Party Wise Sub O/s Ledger Summary= "CCD000014"
+        public DataSet Party_Wise_Sub_OS_Ledger_Summary(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),                                
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@INC_AC_BAL", rptPara.incACBal),
+                                       new SqlParameter("@FREIGHT", rptPara.frt),
+                                       new SqlParameter("@BOTH",rptPara.both), 
+                                       new SqlParameter("@OCTROI",rptPara.oct), 
+                                       new SqlParameter("@SUPL",rptPara.supl), 
+                                       new SqlParameter("@MISC",rptPara.misc), 
+                                       new SqlParameter("@X_TYPE",rptPara.xTp), 
+                                   };
+           
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:18-02-2023
+        //Party Wise - Last Payment Details= "CCD000015"
+        public DataSet Party_Wise_Last_Payment_Details(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@OS_AS_ON_DT", rptPara.OSAsOnDt),
+                                       new SqlParameter("@BILL_UPTO_DATE", rptPara.eDate),                                
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                   };
+
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:20-02-2023
+        //Payment Collection Outstanding= "CCD000008"
+        public DataSet Payment_Collection_Outstanding(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+
+                                       new SqlParameter("@CBS_UPTO", rptPara.cbsUpto),
+                                       new SqlParameter("@OS_AMT", rptPara.OSAmt),
+
+                                       new SqlParameter("@FREIGHT", rptPara.frt),
+                                       new SqlParameter("@BOTH",rptPara.both), 
+                                       new SqlParameter("@OCTROI",rptPara.oct), 
+                                       new SqlParameter("@SUPL",rptPara.supl), 
+                                       new SqlParameter("@MISC",rptPara.misc), 
+                                       new SqlParameter("@X_TYPE",rptPara.xTp), 
+                                   };
+
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:20-02-2023
+        //Party Wise Payment Collection & Outstanding – Year Wise Summary= "CCD000010"
+        public DataSet Party_Wise_Payment_Collection_Outstanding(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@CBS_UPTO", rptPara.cbsUpto),
+                                       new SqlParameter("@REPORT_FOR", rptPara.ReportFor),
+                                       new SqlParameter("@FREIGHT", rptPara.frt),
+                                       new SqlParameter("@BOTH",rptPara.both), 
+                                       new SqlParameter("@OCTROI",rptPara.oct), 
+                                       new SqlParameter("@SUPL",rptPara.supl), 
+                                       new SqlParameter("@MISC",rptPara.misc), 
+                                       new SqlParameter("@X_TYPE",rptPara.xTp), 
+                                       new SqlParameter("@TBL_DATE_PERIOD",rptPara.dtDateList),
+                                   };
+
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:20-02-2023
+        //Submitted Outstanding – Court Cases And Disputed Classes = "CCD000016"
+        public DataSet Submitted_Outstanding_For_Court_And_Disputed_Cases(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),           
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@CBS_UPTO", rptPara.cbsUpto),
+                                       new SqlParameter("@REPORT_FOR", rptPara.ReportFor),
+                                   };
+
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+        //Added By-Pramesh Kumar Vishwakarma, Date:21-02-2023
+        //Party Ledger For Bills Outstanding= "CCD000017"
+        public DataSet Agewise_Submitted_Outstanding_Generation(Rpt_Parameters rptPara)
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@CBS_DATE", rptPara.cbsUpto),
+                                       new SqlParameter("@AGE_YEAR_WISE", rptPara.AgeYearWise),
+                                       new SqlParameter("@PARTY_TYPE", rptPara.PartyType),
+                                       new SqlParameter("@EMP_ID", rptPara.empId),
+                                       new SqlParameter("@PRINT_DATE", rptPara.printDate),
+                                       new SqlParameter("@BILL_AMT", rptPara.billAmt),          
+                                       new SqlParameter("@TBL_CUST_IDS",rptPara.dtCustList), 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+
+        //---------------------Added By Rahul Mall---------11/03/2023
+
+        public DataSet Party_Wise_Cheque_Collection_Details(Rpt_Parameters rptPara) 
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),
+                                        
+                                       new SqlParameter("@TBL_CUST_IDS",rptPara.dtCustList), 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+
+        //---------------------Added By Rahul Mall---------11/03/2023
+
+        public DataSet Month_Wise_Bill_Realisation_Details(Rpt_Parameters rptPara) 
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),
+                                        
+                                       new SqlParameter("@TBL_CUST_IDS",rptPara.dtCustList), 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+
+
+        public DataSet Bill_MR_Pending_ToPay_TBB_Booking_Report(Rpt_Parameters rptPara)  
+        {
+            SqlParameter[] param = { 
+                                       new SqlParameter("@SELBR", rptPara.selBr),                                      
+                                       new SqlParameter("@RID", rptPara.rid),
+                                       new SqlParameter("@DIVID", rptPara.divid),                                       
+                                       new SqlParameter("@TBL_BR_IDS",rptPara.dtBrList), 
+                                       new SqlParameter("@FDATE", rptPara.fDate),
+                                       new SqlParameter("@EDATE", rptPara.eDate),
+                                        
+                                       new SqlParameter("@TBL_CUST_IDS",rptPara.dtCustList), 
+                                   };
+            DataSet ds = new DataAccess(sqlConnection.GetConnectionString()).GetDataSet("pending", CommandType.StoredProcedure, param);
+            return ds;
+        }
+
+
+
+
+    }
+}
+
+______________________________________________________________D:\ARC\08-03-2023\iTMS\eARC\MyReports\CCDReportTemplate.aspx.cs
+
+using System.Web;
+using System.Web.UI;
+using System.Web.UI.WebControls;
+using Microsoft.Reporting.WebForms;
+using System.IO;
+using BusinessLayer.DAL;
+using System.Data;
+using System.Data.SqlClient;
+using BusinessLayer.Entity;
+using NLog;
+using BusinessLayer;
+using System;
+
+namespace eARC.MyReports
+{
+    //Added By - Pramesh Kumar Vishwakarma, Date:07-02-2023
+    public partial class CCDReportTemplate : System.Web.UI.Page
+    {
+        Logger logger = LogManager.GetCurrentClassLogger();
+
+        #region Common Report Info
+        DAL_CCDReport rpData = new DAL_CCDReport();
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                try
+                {
+                    ReportInfo rptInfo = GetReportInfo(Request.Url.AbsoluteUri.Replace(" ", "+"));
+                    if (rptInfo != null)
+                    {
+                        //Initialization
+                        DataTable brdtList = GetBranchInfo(rptInfo);
+                        DataTable custdtList = GetCustomerInfo(rptInfo);
+                        String rptName = "";
+                        ReportParameter[] rdlcParam = null;
+                        Rpt_Parameters rptPara = new Rpt_Parameters();
+                        DataSet dset = new DataSet();
+                        //Report Calling
+                        BindReport(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref rdlcParam);
+                        rptView1.Height = Unit.Pixel(Convert.ToInt32(rptInfo.Height) - 50);
+                        rptView1.ProcessingMode = ProcessingMode.Local;
+                        rptView1.LocalReport.ReportPath = Path.Combine(Server.MapPath("../Rdlc/" + rptInfo.ReportFolder), rptName);
+                        rptView1.LocalReport.DataSources.Clear();
+                        if (dset.Tables.Count > 1)
+                        {
+                            ReportDataSource datasource = new ReportDataSource(rptInfo.ReportId, dset.Tables[1]);
+                            rptView1.LocalReport.DataSources.Add(datasource);
+                        }
+                        if (dset.Tables.Count > 2)
+                        {
+                            ReportDataSource datasource = new ReportDataSource(rptInfo.ReportId + "_1", dset.Tables[2]);
+                            rptView1.LocalReport.DataSources.Add(datasource);
+                        }
+
+                        rptView1.PageCountMode = new PageCountMode();
+                        rptView1.LocalReport.SetParameters(rdlcParam);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, "Error : CCDReportTemplate.aspx Screen ", ex.Message);
+                }
+            }
+        }
+
+        //Added by Pramesh Kumar Vishwakarma, Date:07-02-2023
+        private string DecryptQueryString(string strQueryString)
+        {
+            BusinessLayer.EncryptDecryptQueryString objEDQueryString = new BusinessLayer.EncryptDecryptQueryString();
+            return objEDQueryString.Decrypt(strQueryString, "r0b1nr0y");
+        }
+
+        //Added by Pramesh Kumar Vishwakarma, Date:07-02-2023
+        private ReportInfo GetReportInfo(string strReq)
+        {
+            ReportInfo rptInfo = new ReportInfo();
+            strReq = strReq.Substring(strReq.IndexOf('?') + 1);
+            if (!strReq.Equals(""))
+            {
+                strReq = strReq.Replace("%20", "+");
+                strReq = DecryptQueryString(strReq);
+                string[] arrMsgs = strReq.Split('&');
+                rptInfo.ReportId = Convert.ToString(arrMsgs[0].Split('=')[1]);
+                rptInfo.ReportName = Convert.ToString(arrMsgs[1].Split('=')[1]);
+                rptInfo.Height = Convert.ToInt32(arrMsgs[2].Split('=')[1]);
+                rptInfo.ReportDataSource = Convert.ToString(arrMsgs[3].Split('=')[1]);
+                rptInfo.ReportFolder = Convert.ToString(arrMsgs[4].Split('=')[1]);
+                rptInfo.rptPar = Convert.ToString(arrMsgs[5].Split('=')[1]);
+                rptInfo.brList = Convert.ToString(arrMsgs[6].Split('=')[1]);
+                rptInfo.partyList = Convert.ToString(arrMsgs[7].Split('=')[1]);
+                rptInfo.ctrlid = Convert.ToString(arrMsgs[8].Split('=')[1]);
+                rptInfo.scope = Convert.ToString(arrMsgs[9].Split('=')[1]);
+                rptInfo.role = Convert.ToString(arrMsgs[10].Split('=')[1]);
+                rptInfo.dateList = Convert.ToString(arrMsgs[11].Split('=')[1]);
+                rptInfo.hcList = Convert.ToString(arrMsgs[12].Split('=')[1]);
+                rptInfo.divList = Convert.ToString(arrMsgs[13].Split('=')[1]);
+                rptInfo.ReportDescription = Convert.ToString(arrMsgs[14].Split('=')[1]);
+            }
+            return rptInfo;
+        }
+        //Added by Pramesh Kumar Vishwakarma, Date:07-02-2023
+        private DataTable GetBranchInfo(ReportInfo rptInfo)
+        {
+            DataTable brdtList = new DataTable();
+            brdtList.Columns.Add(new DataColumn("BR_ID", typeof(int)));
+            DataRow brdr = null;
+            if (rptInfo.brList != "")
+            {
+                string[] rptParBr = rptInfo.brList.Split(',');
+                for (int i = 0; i < rptParBr.Length; i++)
+                {
+                    brdr = brdtList.NewRow();
+                    brdr["BR_ID"] = rptParBr[i];
+                    brdtList.Rows.Add(brdr);
+                }
+            }
+            return brdtList;
+        }
+        //Added by Pramesh Kumar Vishwakarma, Date:07-02-2023
+        private DataTable GetCustomerInfo(ReportInfo rptInfo)
+        {
+            DataTable custdtList = new DataTable();
+            custdtList.Columns.Add(new DataColumn("PA_ID", typeof(double)));
+            DataRow custdr = null;
+            if (rptInfo.partyList != "")
+            {
+                string[] rptParCust = rptInfo.partyList.Split(',');
+                for (int i = 0; i < rptParCust.Length; i++)
+                {
+                    custdr = custdtList.NewRow();
+                    custdr["PA_ID"] = rptParCust[i];
+                    custdtList.Rows.Add(custdr);
+                }
+            }
+            return custdtList;
+        }
+
+        #endregion
+
+        #region Report: Add your report
+        private void BindReport(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            if (rptInfo.ReportId == "CCD000006")  // Age_Wise_Outstanding_Summary= "CCD000006",Added by Pramesh Kumar Vishwakarma, Date:07-02-2023
+            {
+                Age_Wise_Outstanding_Summary(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000007")  // Over Due Outstanding Generation= "CCD000007",Added by Pramesh Kumar Vishwakarma, Date:08-02-2023
+            {
+                OverDue_Outstanding_Generation(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000009")  // UnSubmitted Bill Details= "CCD000009",Added by Pramesh Kumar Vishwakarma, Date:08-02-2023
+            {
+                UnSubmitted_Bill_Details(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000011")  // Freight & Other Collection Details= "CCD000011",Added by Pramesh Kumar Vishwakarma, Date:08-02-2023
+            {
+                Freight_Other_Collection_Details(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000012")  // BFDD Report= "CCD000012",Added by Pramesh Kumar Vishwakarma, Date:10-02-2023
+            {
+                BFDD_Statement(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000013")  // Party Ledger For Bills Outstanding= "CCD000013",Added by Pramesh Kumar Vishwakarma, Date:18-02-2023
+            {
+                Party_Ledger_For_Bills_Outstanding(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000014")  // Party Wise Sub O/s Ledger Summary= "CCD000014",Added by Pramesh Kumar Vishwakarma, Date:18-02-2023
+            {
+                Party_Wise_Sub_OS_Ledger_Summary(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000015")  // Party Wise - Last Payment Details= "CCD000015",Added by Pramesh Kumar Vishwakarma, Date:18-02-2023
+            {
+                Party_Wise_Last_Payment_Details(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000008")  // Payment Collection Outstanding= "CCD000008",Added by Pramesh Kumar Vishwakarma, Date:20-02-2023
+            {
+                Payment_Collection_Outstanding(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000010")  // Party Wise Payment Collection & Outstanding – Year Wise Summary= "CCD000010",Added by Pramesh Kumar Vishwakarma, Date:20-02-2023
+            {
+                Party_Wise_Payment_Collection_Outstanding(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000016")  // Submitted Outstanding – Court Cases And Disputed Classes= "CCD000016",Added by Pramesh Kumar Vishwakarma, Date:20-02-2023
+            {
+                Submitted_Outstanding_For_Court_And_Disputed_Cases(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000017")  // Agewise Submitted Outstanding Generation= "CCD000017",Added by Pramesh Kumar Vishwakarma, Date:21-02-2023
+            {
+                Agewise_Submitted_Outstanding_Generation(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000018") //Party_Wise_Cheque_Collection_Details--="CCD000018"------------Added By Rahul Mall---------11/03/2023
+            {
+                Party_Wise_Cheque_Collection_Details(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000019") //Party_Wise_Cheque_Collection_Details--="CCD000019"------------Added By Rahul Mall---------11/03/2023
+            {
+                Month_Wise_Bill_Realisation_Details(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+            else if (rptInfo.ReportId == "CCD000020") //Party_Wise_Cheque_Collection_Details--="CCD000019"------------Added By Rahul Mall---------11/03/2023
+            {
+                Month_Wise_Bill_Realisation_Details(rptInfo, brdtList, custdtList, ref  rptPara, ref  rptName, ref  dset, ref  rdlcParam);
+            }
+        }
+        #endregion
+
+        #region Report: Create your report
+
+        private void Age_Wise_Outstanding_Summary(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            rptPara.cbsUpto = rptPar[5];
+             
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            dset = rpData.RPT_AGE_WISE_OUTSTANDING_SUMMARY(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void OverDue_Outstanding_Generation(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.OverDue = rptPar[3];
+            rptPara.ReportType = rptPar[4];
+            
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+            dset = rpData.RPT_OVERDUE_OUTSTANDING_GENERATION(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void UnSubmitted_Bill_Details(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            dset = rpData.RPT_UNSUBMITTED_BILL_DETAILS(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Freight_Other_Collection_Details(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            rptPara.incBA = rptPar[5];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            dset = rpData.RPT_FREIGHT_OTHER_COLLECTION_DETAILS(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void BFDD_Statement(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            rptPara.ReportType = rptPar[5];
+            rptPara.ReportFor = rptPar[6];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            DataTable dtNrIds = new DataTable();
+            dtNrIds.Columns.Add(new DataColumn("ID", typeof(int)));
+            if (rptInfo.divList != "")
+            {
+                DataRow dRow = null;
+                string[] arrNrIds = rptInfo.divList.Split(',');
+                for (int i = 0; i < arrNrIds.Length; i++)
+                {
+                    dRow = dtNrIds.NewRow();
+                    dRow["ID"] = arrNrIds[i];
+                    dtNrIds.Rows.Add(dRow);
+                }
+                rptPara.dtNrIds = dtNrIds;
+            }
+
+            dset = rpData.RPT_BFDD_STATEMENT(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Party_Ledger_For_Bills_Outstanding(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            rptPara.cbsUpto = rptPar[5];
+            rptPara.incCns = rptPar[6];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+
+            dset = rpData.Party_Ledger_For_Bills_Outstanding(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Party_Wise_Sub_OS_Ledger_Summary(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            rptPara.incACBal = rptPar[5];
+            rptPara.frt = rptPar[6];
+            rptPara.both = rptPar[7];
+            rptPara.oct = rptPar[8];
+            rptPara.supl = rptPar[9];
+            rptPara.misc = rptPar[10];
+            rptPara.xTp = rptPar[11];
+            
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            dset = rpData.Party_Wise_Sub_OS_Ledger_Summary(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Party_Wise_Last_Payment_Details(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.OSAsOnDt = rptPar[3];
+            rptPara.eDate = rptPar[4];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            dset = rpData.Party_Wise_Last_Payment_Details(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Payment_Collection_Outstanding(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.cbsUpto = rptPar[3];
+            rptPara.OSAmt = rptPar[4];
+            
+            rptPara.frt = rptPar[5];
+            rptPara.both = rptPar[6];
+            rptPara.oct = rptPar[7];
+            rptPara.supl = rptPar[8];
+            rptPara.misc = rptPar[9];
+            rptPara.xTp = rptPar[10];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            dset = rpData.Payment_Collection_Outstanding(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+           
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Party_Wise_Payment_Collection_Outstanding(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.cbsUpto = rptPar[3];
+            rptPara.ReportFor = rptPar[4];
+
+            rptPara.frt = rptPar[5];
+            rptPara.both = rptPar[6];
+            rptPara.oct = rptPar[7];
+            rptPara.supl = rptPar[8];
+            rptPara.misc = rptPar[9];
+            rptPara.xTp = rptPar[10];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+
+            DataTable dtDateList = new DataTable();
+            dtDateList.Columns.Add(new DataColumn("F_DATE", typeof(string)));
+            dtDateList.Columns.Add(new DataColumn("T_DATE", typeof(string)));
+            DataRow dateRow = null;
+            if (Convert.ToString(rptInfo.dateList) != "")
+            {
+                string[] dateList = Convert.ToString(rptInfo.dateList).Split(',');
+                for (int i = 0; i < dateList.Length; i++)
+                {
+                    dateRow = dtDateList.NewRow();
+                    dateRow["F_DATE"] = dateList[i].Split(new string[] { " To " }, StringSplitOptions.None)[0];
+                    dateRow["T_DATE"] = dateList[i].Split(new string[] { " To " }, StringSplitOptions.None)[1];
+                    dtDateList.Rows.Add(dateRow);
+                }
+            }
+
+            rptPara.dtDateList = dtDateList;
+
+
+            dset = rpData.Party_Wise_Payment_Collection_Outstanding(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Submitted_Outstanding_For_Court_And_Disputed_Cases(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+            rptPara.cbsUpto = rptPar[5];
+            rptPara.ReportFor = rptPar[6];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+
+            dset = rpData.Submitted_Outstanding_For_Court_And_Disputed_Cases(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Agewise_Submitted_Outstanding_Generation(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.printDate = rptPar[3];
+            rptPara.cbsUpto = rptPar[4];
+            rptPara.billAmt = rptPar[5];
+            rptPara.AgeYearWise = rptPar[6];
+            rptPara.PartyType = rptPar[7];
+            rptPara.empId = rptPar[8];
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+
+            dset = rpData.Agewise_Submitted_Outstanding_Generation(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Party_Wise_Cheque_Collection_Details(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+           
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+
+            dset = rpData.Party_Wise_Cheque_Collection_Details(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Month_Wise_Bill_Realisation_Details(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4]; 
+
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+
+            dset = rpData.Month_Wise_Bill_Realisation_Details(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        private void Bill_MR_Pending_ToPay_TBB_Booking_Report(ReportInfo rptInfo, DataTable brdtList, DataTable custdtList, ref Rpt_Parameters rptPara, ref string rptName, ref DataSet dset, ref ReportParameter[] rdlcParam)
+        {
+            string[] rptPar = rptInfo.rptPar.Split(',');
+            rptPara.rid = rptPar[0];
+            rptPara.divid = rptPar[1];
+            rptPara.selBr = rptPar[2];
+            rptPara.fDate = rptPar[3];
+            rptPara.eDate = rptPar[4];
+
+
+            rptPara.ctrlid = rptInfo.ctrlid;
+            rptPara.scope = rptInfo.scope;
+            rptPara.role = rptInfo.role;
+            rptPara.dtBrList = brdtList;
+            rptPara.dtCustList = custdtList;
+
+
+            dset = rpData.Bill_MR_Pending_ToPay_TBB_Booking_Report(rptPara);
+            rptName = rptInfo.ReportId + ".rdlc";
+            rdlcParam = new ReportParameter[]{
+                            new ReportParameter("cmp", "ASSOCIATED ROAD CARRIERS LIMITED"),
+                            new ReportParameter("fdt", dset.Tables[0].Rows[0]["FDATE"].ToString()),
+                            new ReportParameter("edt", dset.Tables[0].Rows[0]["EDATE"].ToString()),
+                            new ReportParameter("rptname", rptInfo.ReportName),
+                            new ReportParameter("rname", dset.Tables[0].Rows[0]["R_NAME"].ToString()),
+                            new ReportParameter("divname", dset.Tables[0].Rows[0]["DIV_NAME"].ToString()),
+            };
+        }
+
+        #endregion 
+         
+    }
+}
+______________________________________________________________D:\ARC\08-03-2023\iTMS\BusinessLayer\Entity\CCDReport\Rpt_Agewise_Submitted_Outstanding.cs
+
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Web.Mvc;
+
+namespace BusinessLayer.Entity.CCDReport
+{
+    //Added By - Pramesh Kumar Vishwakarma, Date:08-02-2023
+    public class Rpt_Agewise_Submitted_Outstanding
+    {
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> BILLS_F_DATE { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string BILLS_F_DATE1 { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> BILLS_UPTO_DATE { get; set; }
+
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string BILLS_UPTO_DATE1 { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> CBS_DATE { get; set; }
+
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string CBS_DATE1 { get; set; }
+
+        [DataType(DataType.Date)]
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public Nullable<System.DateTime> PRINT_DATE { get; set; }
+
+        [DisplayFormat(DataFormatString = "{0:dd/MM/yyyy}", ApplyFormatInEditMode = true)]
+        public string PRINT_DATE1 { get; set; }
+
+        public decimal? BILL_AMOUNT { get; set; }
+
+        public int? R_ID { get; set; }
+        public SelectList R_LIST { get; set; }
+
+        public int? HDN_DIV_ID { get; set; }
+        public int? DIV_ID { get; set; }
+        public SelectList DIV_LIST { get; set; }
+
+        public string brListData { get; set; }
+        public Nullable<int> AllBr { get; set; }
+
+        public string partyListData { get; set; }
+        public Nullable<int> AllParty { get; set; }
+
+        public Nullable<int> SEARCH_BR_ID { get; set; }
+        public SelectList SEARCH_BR_LIST { get; set; }
+
+        public Nullable<int> EMP_ID { get; set; }
+        public SelectList EMP_LIST { get; set; }
+
+        public string PartyType { get; set; }
+        public string AgeYearWise { get; set; }
+        public object PartyJsonList { get; set; }
+
+        public Rpt_Agewise_Submitted_Outstanding()
+        {
+            SEARCH_BR_LIST = new SelectList(new List<SelectListItem>
+                                    { 
+                                        new SelectListItem { Text = "0 - ALL BRANCH" , Value = "0"},
+                                        new SelectListItem { Text = "1 - SELECTED BRANCH" , Value = "1"},
+                                    }, "Value", "Text", 0);
+        }
+    }
+}
+
+______________________________________________________________D:\ARC\08-03-2023\iTMS\eARC\Views\CCDReport\Bill_MR_Pending_ToPay_TBB_Booking_Report.cshtml
+
+@*Added By Rahul Mall *@
+@model BusinessLayer.Entity.CCDReport.Rpt_Bill_MR_Pending_ToPay_TBB_Booking_Report
+
+@{
+    ViewBag.Title = "Bill_MR_Pending_ToPay_TBB_Booking_Report";
+    Layout = "~/Views/Shared/_MainDashboard.cshtml";
+}
+
+<style>
+    .widget-main {
+        padding-top: 12px;
+        padding-right: 12px;
+        padding-bottom: 5px;
+        padding-left: 12px;
+    }
+</style>
+
+@Styles.Render("~/bundles/Report/CommanStyle")
+@Scripts.Render("~/bundles/Report/CommanScripts")
+
+<style>
+    @@media screen and (max-width: 600px) {
+        .input-group-addon {
+            visibility: hidden;
+            clear: both;
+            float: left;
+            display: none;
+        }
+    }
+</style>
+
+@using (Html.BeginForm("Bill_MR_Pending_ToPay_TBB_Booking_Report", "CCDReport", FormMethod.Post, new { @id = "frmBill_MR_Pending_Report" }))
+{
+    @Html.AntiForgeryToken()
+    @Html.ValidationSummary(true)
+    Html.RenderPartial("_Alerts");
+    <div class="alert alert-danger alert-dismissable" id="pageAlert" style="display:none;">
+        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+        <b id="alertMessage"></b>
+    </div>
+
+    <div class="row">
+        <div class="col-xs-12 col-sm-4">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title">Input Parameters Box</h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+                <div class="widget-body">
+                    <div class="widget-main">
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="ddlRegion" class="lbl_9">Region</label>
+                                    @Html.DropDownListFor(x => x.R_ID, Model.R_LIST, "", new { @class = "chosen-select form-control", @id = "ddlRegion", @data_placeholder = "SELECT REGION" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <label for="ddlDivision" class="lbl_9">Division</label>
+                                    @Html.DropDownListFor(x => x.DIV_ID, new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text"), "", new { @class = "chosen-select form-control", @id = "ddlDivision", @data_placeholder = "SELECT DIVISION" })
+                                    @Html.ValidationMessageFor(x => x.DIV_ID)
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                <div class="col-xs-6">
+                                    <label for="txtReportfDt" class="lbl_9">From Date</label>
+                                    @Html.TextBoxFor(x => x.BILLS_F_DATE, "{0:yyyy-MM-dd}", new { @id = "txtReportfDt", @type = "date", @class = "form-control mobDate", @maxlength = "10", @Style = "padding-bottom:5px;" })
+                                    @Html.TextBoxFor(x => x.BILLS_F_DATE1, new { @id = "txtReportfDt1", @class = "form-control datepicker deskDate", @maxlength = "10", @placeholder = "dd/mm/yyyy", @autocomplete = "off", @Style = "padding-bottom:5px;", @readonly = "readonly" })
+                                </div>
+                                <div class="col-xs-6">
+                                    <label for="txtReporttDt" class="lbl_9">To Date</label>
+                                    @Html.TextBoxFor(x => x.BILLS_UPTO_DATE, "{0:yyyy-MM-dd}", new { @id = "txtReporttDt", @type = "date", @class = "form-control mobDate", @maxlength = "10", @Style = "padding-bottom:5px;" })
+                                    @Html.TextBoxFor(x => x.BILLS_UPTO_DATE1, new { @id = "txtReporttDt1", @class = "form-control datepicker deskDate", @maxlength = "10", @placeholder = "dd/mm/yyyy", @autocomplete = "off", @Style = "padding-bottom:5px;", @readonly = "readonly" })
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-xs-12" style="padding: 0px 0px 0px 0px;">
+                                 <div class="col-xs-6">
+                                    <label for="ddlBrSelect" class="lbl_9">Branch</label>
+                                    @Html.DropDownListFor(x => x.SEARCH_BR_ID, Model.SEARCH_BR_LIST, "", new { @class = "chosen-select form-control", @id = "ddlBrSelect", @data_placeholder = "ALL BRANCH" })
+                                </div>
+                                <div style="margin-top:30px;">
+                                    <label>
+                                        <input id="chkParty" name="form-field-checkbox" type="checkbox" class="ace chkparty" />
+                                        <span class="lbl">All Parties</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-xs-12" style="margin-top:5px;">
+                                <label for="chkParcel" class="lbl_9">Load Type</label><br />
+                                <label style="margin-right: 10px;">
+                                    <input id="chkParcel" name="form-field-checkbox1" type="checkbox" class="ace"  checked/>
+                                    <span class="lbl">Parcel</span>
+                                </label>
+                                <label style="margin-right: 10px;">
+                                    <input id="chkPart" name="form-field-checkbox1" type="checkbox" class="ace"  />
+                                    <span class="lbl">Part</span>
+                                </label>
+                                <label style="margin-right: 10px;">
+                                    <input id="chkFTL" name="form-field-checkbox1" type="checkbox" class="ace" />
+                                    <span class="lbl">FTL</span>
+                                </label>
+                            </div>
+                            <div class="col-xs-12">
+                                <label for="chkBasis" class="lbl_9">Basis</label><br />
+                                <label style="margin-right: 10px;">
+                                    <input id="chkToPay" name="form-field-checkbox2" type="checkbox" class="ace" checked />
+                                    <span class="lbl">To Pay</span>
+                                </label>
+                                <label style="margin-right: 10px;">
+                                    <input id="chkToBeBilled" name="form-field-checkbox2" type="checkbox" class="ace" />
+                                    <span class="lbl">To Be Billed</span>
+                                </label>
+                            </div>
+                            <div class="col-xs-12">
+                                <label for="ReportType1" class="lbl_9">Delivery Type</label>
+                                <div>
+                                    <label>
+                                        <input id="rdDelevered" name="ReportType1" type="radio" class="ace" checked="checked" />
+                                        <span class="lbl">Delevered</span>
+                                    </label>
+                                    <label>
+                                        <input id="rdNonDelevered" name="ReportType1" type="radio" class="ace" />
+                                        <span class="lbl">Non Delevered</span>
+                                    </label>
+                                    <label>
+                                        <input id="rdAll" name="ReportType1" type="radio" class="ace" />
+                                        <span class="lbl">All</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-xs-12">
+                                <label for="ReportType2" class="lbl_9">Report Type</label>
+                                <div>
+                                    <label>
+                                        <input id="rdSummary" name="ReportType2" type="radio" class="ace" checked="checked" />
+                                        <span class="lbl">Summary Rpt</span>
+                                    </label>
+                                    <label>
+                                        <input id="rdDetails" name="ReportType2" type="radio" class="ace" />
+                                        <span class="lbl">Details Rpt</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-xs-12">
+                                <label for="ReportType3" class="lbl_9">Booking Type</label>
+                                <div>
+                                    <label>
+                                        <input id="rdBookingStnWise" name="ReportType3" type="radio" class="ace" checked="checked" />
+                                        <span class="lbl">Booking StnWise</span>
+                                    </label>
+                                    <label>
+                                        <input id="rdDeliveryStnWise" name="ReportType3" type="radio" class="ace" />
+                                        <span class="lbl">Delivery StnWise</span>
+                                    </label>
+                                </div>
+                            </div>
+                         </div>
+                     </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-12 col-sm-4">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <div style="padding: 0px; width: 40%;float: left;">
+                        <h4 class="widget-title">Branch Box</h4>
+                    </div>
+                    <div style="padding: 0px; width: 50%; float: left; ">
+                        <span class="input-icon pull-right" style="padding:2px; ">
+                            <input type="text" autocomplete="off" class="form-control" id="txtSearchTable" placeholder="Search Branch" />
+                            <i class="ace-icon fa fa-search"></i>
+                        </span>
+                    </div>
+                    <div style="padding: 0px; width: 10%; float: right;">
+                        <span class="widget-toolbar">
+                            <a href="#" data-action="collapse">
+                                <i class="ace-icon fa fa-chevron-up"></i>
+                            </a>
+                        </span>
+                    </div>
+                </div>
+                <div class="widget-body" style="width: 100%;">
+                    <div id="bodyBranchList" class="widget-main" style="width: 100%; height: 440px; overflow-y: auto; overflow-x: hidden">
+                    </div>
+                    @Html.HiddenFor(model => model.brListData, new { id = "hdn_brListData" })
+                </div>
+            </div>
+        </div>
+      <div class="col-xs-12 col-sm-4">
+            <div class="widget-box">
+                <div class="widget-header">
+                    <h4 class="widget-title"><span id="widget_lbl">Party Checklist Box</span></h4>
+                    <span class="widget-toolbar">
+                        <a href="#" data-action="collapse">
+                            <i class="ace-icon fa fa-chevron-up"></i>
+                        </a>
+                    </span>
+                </div>
+                <div class="widget-body">
+                    <div id="bodyPartyList" class="widget-main" style="height: 440px; overflow-y: auto; overflow-x: hidden">
+                        @*Here Party List class="form-control"*@
+                        <input type="text" id="txtPartList" name="party" />
+                    </div>
+                    @Html.HiddenFor(model => model.partyListData, new { id = "hdn_partyListData" })
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row" style="text-align:center; padding-bottom:5px;">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <input type="button" id="btnShow" class="btn btn-success" value="Process Report" name="Save" style="width:auto;" />
+            <input type="reset" class="btn btn-default" value="Reset [Ctrl+R]" style="width:auto;" id="btnReset" />
+        </div>
+    </div>
+    <div class="row" style="text-align:center; padding-bottom:5px;">
+        <div class="col-xs-12 col-sm-12 col-md-12">
+            <span id="spnError" class="field-validation-error">&nbsp;</span>
+        </div>
+    </div>
+}
+
+<script>
+    $(document).ready(function () {
+        function init() {
+            shortcut.add("Ctrl+R", function () {
+                // Reset
+                var url = '@Url.Action("Bill_MR_Pending_ToPay_TBB_Booking_Report", "CCDReport")';
+                window.location.href = url;
+            });
+        }
+        window.onload = init;
+
+        /*----- Chosen Select Dropdown Validation ----*/
+        var validator = $("#frmBill_MR_Pending_Report").data('validator');
+        validator.settings.ignore = ":hidden:not(select)";
+        $('.chosen-select').chosen().change(function () {
+            $(this).trigger('click');
+        });
+        /*----- Chosen Select Dropdown Validation End----*/
+
+        $('#btnShow').click(function (e) {
+            if (CheckSession(e) == 1) {
+                getReport();
+            }
+        });
+
+
+        function getReport() {
+            var rId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var ddlBrSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+            var fDate = $('#txtReportfDt1').val();
+            var eDate = $('#txtReporttDt1').val();
+
+            $("input[name=partyListData]").val($("#txtPartList").val());
+            var selBr = 0;
+            var brList = '0';
+            if (ddlBrSelect == 1) {
+                brList = $("#hdn_brListData").val() == '' ? '0' : $("#hdn_brListData").val();
+                selBr = 1;
+            }
+            else {
+                selBr = 0;
+            }
+
+            var ReportType1 = 0;
+            if ($("#rdDelevered").is(':checked')) {
+                ReportType = 1;
+            }
+            else if ($("#rdNonDelevered").is(':checked')) {
+                ReportType = 2;
+            }
+            else if ($("#rdAll").is(':checked')) {
+                ReportType = 3;
+            }
+
+            var ReportType2 = 0;
+            if ($("#rdSummary").is(':checked')) {
+                ReportType = 1;
+            }
+            else if ($("#rdDetails").is(':checked')) {
+                ReportType = 2;
+            }
+
+            var ReportType3 = 0;
+            if ($("#rdBookingStnWise").is(':checked')) {
+                ReportType = 1;
+            }
+            else if ($("#rdDeliveryStnWise").is(':checked')) {
+                ReportType = 2;
+            }
+           
+            var partyList = $("#txtPartList").val() == '' ? '0' : $("#txtPartList").val();
+
+          // Report Parameters
+            var paraList = new Array();
+            paraList.push(rId);
+            paraList.push(divId);
+            paraList.push(selBr);
+            paraList.push(fDate);
+            paraList.push(eDate);
+
+
+            // End Report Parameters
+            var reportId = 'CCD000020';
+            var flag = 0;
+            if (parseInt(divId) == 0) {
+                flag = 1;
+                $('#spnError').text('Select Division.').show();
+                return false;
+            }
+
+            if (parseInt(flag) == 0) {
+                $.ajax({
+                    type: "POST",
+                    url: '../CCDReport/SetTempData',
+                    data: '{ reportId:"' + reportId + '",rptPar:"' + paraList + '",brList:"' + brList + '",partyList:"' + partyList + '"}',
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "text",
+                    beforeSend: function () {
+                        $('#LoadingModalLabel').text('Please wait... We are processing your request.').show();
+                        $('#LoadingModal').modal('show');
+                    },
+                    success: function (r) {
+                        var url = '@Url.Action("ReportTemplate", "CCDReport")';
+                        window.location.href = url;
+                        $('#spnError').text('');
+                    },
+                    complete: function (json) {
+                        $("#LoadingModal").modal('hide');
+                    },
+                    error: function (result) {
+                        alert(result.status + ': ' + result.statusText);
+                    }
+                });
+            }
+        }
+
+        $("#txtSearchTable").keyup(function () {
+            var value = this.value.toLowerCase().trim();
+
+            $("#dvBrList > .ui-checkbox").each(function (index) {
+                $(this).find("label").each(function () {
+                    var id = $(this).text().toLowerCase().trim();
+                    var not_found = (id.indexOf(value) == -1);
+                    $(this).closest('.ui-checkbox').toggle(!not_found);
+                    return not_found;
+                });
+            });
+        });
+
+        $("#ddlDivision").change(function () {
+            var ddlBrSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+            $('#spnError').text('');
+            var dId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+
+            if (ddlBrSelect == 0) {
+                if (dId > 0) {
+                    AllAccessBranch(0);
+                }
+            }
+            else {
+                AllAccessBranch(1);
+            }
+            chkBrListData();
+        });
+
+        Division();
+
+        function Division() {
+            var regionId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            var str = '';
+            if (parseInt(regionId) > 0) {
+                $.ajax({
+                    type: "GET",
+                    url: "../Report/GetDivisionList",
+                    data: { rId: regionId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        str = '<option value=""></option>';
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                str += '<option value=' + data[i].DIV_ID + '>' + data[i].DIV_CODE + ' - ' + data[i].DIV_NAME + '</option>';
+                            }
+                            $("#ddlDivision").empty().append(str);
+                            $("#ddlDivision").trigger("chosen:updated");
+                        }
+                    }
+                });
+            }
+            else {
+                str = '<option value=""></option>';
+                $("#ddlDivision").empty().append(str);
+                $("#ddlDivision").trigger("chosen:updated");
+            }
+        }
+
+        $('#ddlRegion').on('change', function () {
+            Division();
+            AllAccessBranch(0);
+            $('#spnError').text('').hide();
+        });
+
+        function AllAccessBranch(chkState) {
+            var body = '';
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var rId = $("#ddlRegion option:selected").val() == '' ? '0' : $("#ddlRegion option:selected").val();
+            if (parseInt(divId) > 0) {
+                $.ajax({
+                    url: "../CCDReport/GET_ACCOUNTING_BRANCH_LIST_BY_FILTER",
+                    type: "GET",
+                    data: { R_ID: rId, DIV_ID: divId },
+                    dataType: "json",
+                    async: false,
+                    success: function (data) {
+                        var body = '';
+                        body += '<div id="dvBrList" class="row no-gutters" style="display:block">';
+                        if (data.length > 0) {
+                            for (var i = 0; i < data.length; i++) {
+                                body += '<div class="col-xs-6 col-sm-4 col-md-4 col-lg-4 ui-checkbox">';
+                                body += '<label class="checkbox-inline" style="font-size: 10px;">';
+                                if (chkState == 1) {
+                                    body += '<input id="chkBr_' + data[i].BR_ID + '" type="checkbox" value="' + data[i].BR_ID + '" name="chkBranch" class="chkBrnachlist">' + data[i].BR_NAME;
+                                }
+                                else {
+                                    body += '<input id="chkBr_' + data[i].BR_ID + '" type="checkbox" value="' + data[i].BR_ID + '" name="chkBranch" class="chkBrnachlist" checked>' + data[i].BR_NAME;
+                                }
+                                body += '</label>';
+                                body += '</div>';
+                            }
+                            body += '</div>';
+                            $('#bodyBranchList').empty().append(body);
+                        }
+                    }
+                });
+            }
+        }
+
+        $(document).on('change', 'div.ui-checkbox', function () {
+            chkBrListData();
+        });
+
+        function chkBrListData() {
+            chkBrListVal = [];
+            $('input:checkbox.chkBrnachlist:checked').each(function () {
+                chkBrListVal.push($(this).attr('value'));
+                //if (chkBrListVal.length > 20) {
+                //    $(this).prop('checked', false);
+                //    return false;
+                //}
+            });
+            $("input[name=brListData]").val(chkBrListVal);
+        }
+
+        $('#ddlBrSelect').on('change', function () {
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            if (parseInt($(this).val()) == 0 && parseInt(divId) > 0) {
+                $(".chkBrnachlist:checkbox").prop('checked', true);
+            }
+            else {
+                $(".chkBrnachlist:checkbox").prop('checked', false);
+            }
+        });
+
+        $('#btnReset').click(function () {
+            // Reset
+            var url = '@Url.Action("Bill_MR_Pending_ToPay_TBB_Booking_Report", "CCDReport")';
+            window.location.href = url;
+        });
+
+        $(function () {
+            $('#txtReportfDt1').datepicker({
+                dateFormat: 'dd/mm/yy'
+                , changeMonth: true
+                , changeYear: true
+                , maxDate: 0
+                , onClose: function (date) {
+                    //Set Minimum Date of EndDatePicker After Selected Date of StartDatePicker
+                    $('#txtReportfDt').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+
+                    $("#txtReporttDt1").datepicker("option", "minDate", new Date(DateFormat_ddmmyyy_To_yyyymmdd(date)));
+                    document.getElementById("txtReporttDt").setAttribute("min", DateFormat_ddmmyyy_To_yyyymmdd(date));
+                    $("#txtReporttDt1").focus();
+                }
+                , onSelect: function (selectedDate) {
+                    $('#txtReportfDt').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+                }
+            });
+
+            $('#txtReporttDt1').datepicker({
+                dateFormat: 'dd/mm/yy'
+                , changeMonth: true
+                , changeYear: true
+                , maxDate: 0
+                , onClose: function (date) {
+                    //Set Minimum Date of EndDatePicker After Selected Date of StartDatePicker
+                    $('#txtReporttDt').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+                }
+                , onSelect: function (selectedDate) {
+                    $('#txtReporttDt').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+                }
+            });
+
+            $('#txtCBSDt1').datepicker({
+                dateFormat: 'dd/mm/yy'
+               , changeMonth: true
+               , changeYear: true
+               , maxDate: 0
+               , onClose: function (date) {
+                   $('#txtCBSDt').val(DateFormat_ddmmyyy_To_yyyymmdd(date));
+               }
+               , onSelect: function (selectedDate) {
+                   $('#txtCBSDt').val(DateFormat_ddmmyyy_To_yyyymmdd(selectedDate));
+               }
+            });
+        });
+
+        $("#txtPartList").val('').hide();
+
+        $(".chkparty").click(function () {
+            chkBrListData();
+            var divId = $("#ddlDivision option:selected").val() == '' ? '0' : $("#ddlDivision option:selected").val();
+            var hdnBr = $("#hdn_brListData").val() == '' ? '0' : $("#hdn_brListData").val();
+            var brSelect = $("#ddlBrSelect option:selected").val() == '' ? '0' : $("#ddlBrSelect option:selected").val();
+
+            if (brSelect == '0') { }
+            else {
+                hdnBr = 0;
+            }
+
+            var url = 'Rpt_GetPartyList?rid=0&did=' + divId + '&brid=0&paid=0&hdnStn=' + hdnBr + "&term=";
+
+            if ($(this).is(':checked')) {
+                if (parseInt(divId) == 0) {
+                    $("#txtPartList").hide();
+                    $('.token-input-list').remove();
+                }
+                else {
+                    if ($(".token-input-list").length > 0) {
+                    }
+                    else {
+                        chkBrListData();
+                        $('.token-input-list').remove();
+                        $("#txtPartList").tokenInput(url, {
+                            preventDuplicates: true,
+                            minChars: 4,
+                            tokenLimit: 20,
+                            hintText: "Type Party Name",
+                            noResultsText: "No Result",
+                            queryParam: "term"
+                        });
+                    }
+                }
+            }
+            else {
+                $('.token-input-list').remove();
+            }
+        });
+    });
+
+</script>
+
+<style>
+    .chosen-container {
+        min-width: 100% !important;
+    }
+</style>
+
+______________________________________________________________
+______________________________________________________________
+______________________________________________________________
